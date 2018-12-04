@@ -1,0 +1,33 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+# Add inputs and outputs from these tool invocations to the build variables 
+C_SRCS += \
+../Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c \
+../Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.c \
+../Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.c \
+../Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.c 
+
+OBJS += \
+./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.o \
+./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.o \
+./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.o \
+./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.o 
+
+C_DEPS += \
+./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.d \
+./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.d \
+./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.d \
+./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.d 
+
+
+# Each subdirectory must supply rules for building sources it contributes
+Middlewares/ST/STM32_USB_Host_Library/Core/Src/%.o: ../Middlewares/ST/STM32_USB_Host_Library/Core/Src/%.c
+	@echo 'Building file: $<'
+	@echo 'Invoking: Cross ARM GNU C Compiler'
+	arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -Werror -Wuninitialized -Wextra -Wmissing-declarations -Wpointer-arith -Wshadow -Wlogical-op -Wfloat-equal  -g3 -D__weak=“attribute((weak))” -D__packed="attribute((packed))" -DUSE_HAL_DRIVER -DSTM32F412Zx -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Inc -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Drivers/STM32F4xx_HAL_Driver/Inc -I"C:/Users/Chenj/workspace/R666/STM32F412ZGx/Drivers/STM32F4xx_HAL_Driver/Inc/Legacy" -I"C:/Users/Chenj/workspace/R666/STM32F412ZGx/Drivers/CMSIS/Device/ST/STM32F4xx/Include" -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Drivers/CMSIS/Include -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Middlewares/Third_Party/FatFs/src -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Middlewares/ST/STM32_USB_Host_Library/Core/Inc -std=gnu11 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -c -o "$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+

@@ -1,0 +1,83 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+# Add inputs and outputs from these tool invocations to the build variables 
+ASM_SRCS += \
+../Src/startup_stm32f412zx.asm 
+
+C_SRCS += \
+../Src/adc.c \
+../Src/fatfs.c \
+../Src/fsmc.c \
+../Src/gpio.c \
+../Src/i2c.c \
+../Src/main.c \
+../Src/rtc.c \
+../Src/spi.c \
+../Src/stm32f4xx_hal_msp.c \
+../Src/stm32f4xx_hal_timebase_TIM.c \
+../Src/stm32f4xx_it.c \
+../Src/system_stm32f4xx.c \
+../Src/usart.c \
+../Src/usb_host.c \
+../Src/usbh_conf.c \
+../Src/usbh_diskio.c 
+
+OBJS += \
+./Src/adc.o \
+./Src/fatfs.o \
+./Src/fsmc.o \
+./Src/gpio.o \
+./Src/i2c.o \
+./Src/main.o \
+./Src/rtc.o \
+./Src/spi.o \
+./Src/startup_stm32f412zx.o \
+./Src/stm32f4xx_hal_msp.o \
+./Src/stm32f4xx_hal_timebase_TIM.o \
+./Src/stm32f4xx_it.o \
+./Src/system_stm32f4xx.o \
+./Src/usart.o \
+./Src/usb_host.o \
+./Src/usbh_conf.o \
+./Src/usbh_diskio.o 
+
+ASM_DEPS += \
+./Src/startup_stm32f412zx.d 
+
+C_DEPS += \
+./Src/adc.d \
+./Src/fatfs.d \
+./Src/fsmc.d \
+./Src/gpio.d \
+./Src/i2c.d \
+./Src/main.d \
+./Src/rtc.d \
+./Src/spi.d \
+./Src/stm32f4xx_hal_msp.d \
+./Src/stm32f4xx_hal_timebase_TIM.d \
+./Src/stm32f4xx_it.d \
+./Src/system_stm32f4xx.d \
+./Src/usart.d \
+./Src/usb_host.d \
+./Src/usbh_conf.d \
+./Src/usbh_diskio.d 
+
+
+# Each subdirectory must supply rules for building sources it contributes
+Src/%.o: ../Src/%.c
+	@echo 'Building file: $<'
+	@echo 'Invoking: Cross ARM GNU C Compiler'
+	arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -Werror -Wuninitialized -Wextra -Wmissing-declarations -Wpointer-arith -Wshadow -Wlogical-op -Wfloat-equal  -g3 -D__weak=“attribute((weak))” -D__packed="attribute((packed))" -DUSE_HAL_DRIVER -DSTM32F412Zx -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Inc -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Drivers/STM32F4xx_HAL_Driver/Inc -I"C:/Users/Chenj/workspace/R666/STM32F412ZGx/Drivers/STM32F4xx_HAL_Driver/Inc/Legacy" -I"C:/Users/Chenj/workspace/R666/STM32F412ZGx/Drivers/CMSIS/Device/ST/STM32F4xx/Include" -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Drivers/CMSIS/Include -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Middlewares/Third_Party/FatFs/src -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Middlewares/ST/STM32_USB_Host_Library/Core/Inc -std=gnu11 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -c -o "$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+Src/%.o: ../Src/%.asm
+	@echo 'Building file: $<'
+	@echo 'Invoking: Cross ARM GNU Assembler'
+	arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -Werror -Wuninitialized -Wextra -Wmissing-declarations -Wpointer-arith -Wshadow -Wlogical-op -Wfloat-equal  -g3 -x assembler-with-cpp -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -c -o "$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+

@@ -1,0 +1,1 @@
+Src/startup_stm32f412zx.o: ../Src/startup_stm32f412zx.asm

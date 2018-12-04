@@ -1,0 +1,30 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+# Add inputs and outputs from these tool invocations to the build variables 
+C_SRCS += \
+../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.c \
+../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c \
+../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.c 
+
+OBJS += \
+./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.o \
+./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.o \
+./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.o 
+
+C_DEPS += \
+./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.d \
+./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.d \
+./Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.d 
+
+
+# Each subdirectory must supply rules for building sources it contributes
+Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/%.o: ../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/%.c
+	@echo 'Building file: $<'
+	@echo 'Invoking: Cross ARM GNU C Compiler'
+	arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -Werror -Wuninitialized -Wextra -Wmissing-declarations -Wpointer-arith -Wshadow -Wlogical-op -Wfloat-equal  -g3 -DUSE_HAL_DRIVER -D__weak=“attribute((weak))” -D__packed="attribute((packed))" -DSTM32F412Zx -DARM_MATH_CM4 -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Inc -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Drivers/STM32F4xx_HAL_Driver/Inc -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Drivers/CMSIS/Device/ST/STM32F4xx/Include -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Drivers/CMSIS/Include -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Middlewares/Third_Party/FatFs/src -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Inc -IC:/Users/Chenj/workspace/R666/STM32F412ZGx/Middlewares/ST/STM32_USB_Host_Library/Core/Inc -std=gnu11 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -c -o "$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+
