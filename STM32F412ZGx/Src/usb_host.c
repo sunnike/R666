@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -54,12 +54,14 @@
 #include "usbh_msc.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "fatfs.h"
+#include "main.h"
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+unsigned char debug_mount = 0;
+//char USBDISKPath[4];            /* USB Host logical drive path */
 /* USER CODE END PV */
 
 /* USER CODE BEGIN PFP */
@@ -126,6 +128,59 @@ void MX_USB_HOST_Process(void)
 static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 {
   /* USER CODE BEGIN CALL_BACK_1 */
+
+  switch(id)
+  {
+  case HOST_USER_SELECT_CONFIGURATION:
+	break;
+
+  case HOST_USER_DISCONNECTION:
+	Appli_state = APPLICATION_DISCONNECT;
+	  if(f_mount(NULL, "", 0) != FR_OK)
+	{
+	  //LCD_ErrLog("ERROR : Cannot DeInitialize FatFs! \n");
+	}
+	if (FATFS_UnLinkDriver(USBHPath) != 0)
+	{
+	  //LCD_ErrLog("ERROR : Cannot UnLink USB FatFS Driver! \n");
+	}
+	break;
+
+  case HOST_USER_CLASS_ACTIVE:
+	Appli_state = APPLICATION_READY;
+	break;
+
+  case HOST_USER_CONNECTION:
+	//Appli_state = APPLICATION_START;
+	if(FATFS_GetAttachedDriversNbr() == 0)
+	{
+		FATFS_LinkDriver(&USBH_Driver, USBHPath);
+	}
+
+	if (f_mount(&USBHFatFS, "", 0) != FR_OK)
+	{
+		debug_mount = 1;
+	}
+	else
+	{
+		debug_mount = 2;
+	}
+
+	//if (FATFS_LinkDriver(&USBH_Driver, USBHPath) == 0)
+	//{
+	//  if (f_mount(&USBHFatFS, "", 0) != FR_OK)
+	//  {
+	//	//LCD_ErrLog("ERROR : Cannot Initialize FatFs! \n");
+	//  }
+	//}
+	break;
+
+  default:
+	break;
+  }
+
+
+  /*
   switch(id)
   {
   case HOST_USER_SELECT_CONFIGURATION:
@@ -133,6 +188,10 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
   case HOST_USER_DISCONNECTION:
   Appli_state = APPLICATION_DISCONNECT;
+  if(f_mount(NULL, "", 0) != FR_OK)
+  {
+	//LCD_ErrLog("ERROR : Cannot DeInitialize FatFs! \n");
+  }
   break;
 
   case HOST_USER_CLASS_ACTIVE:
@@ -141,11 +200,22 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
   case HOST_USER_CONNECTION:
   Appli_state = APPLICATION_START;
+  if(f_mount(&USBHFatFS, "", 0) != FR_OK)
+  {
+	//LCD_ErrLog("ERROR : Cannot Initialize FatFs! \n");
+	  debug_mount = 1;
+  }
+  else
+  {
+	  debug_mount = 2;
+  }
   break;
 
   default:
   break;
   }
+  */
+
   /* USER CODE END CALL_BACK_1 */
 }
 

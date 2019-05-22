@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -60,7 +60,8 @@
 #include "stm32f4xx_hal.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+//#include "usbh_diskio.h"  //FAE
+//#include "ff_gen_drv.h"   //FAE
 /* USER CODE END INCLUDE */
 
 /** @addtogroup USBH_OTG_DRIVER

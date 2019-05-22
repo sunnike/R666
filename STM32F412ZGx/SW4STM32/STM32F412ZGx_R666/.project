@@ -24,7 +24,11 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 		<nature>fr.ac6.mcu.ide.core.MCUProjectNature</nature>
 	</natures>
-	<linkedResources>
+	<linkedResources><link>
+      <name>Middlewares/FatFs/ccsbcs.c</name>
+      <type>1</type>
+      <location>PARENT-2-PROJECT_LOC/Middlewares/Third_Party/FatFs/src/option/ccsbcs.c</location>
+    </link>
     <link>
       <name>Application/SW4STM32/startup_stm32f412zx.s</name>
       <type>1</type>

@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -66,8 +66,19 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-/* Private variables ---------------------------------------------------------*/
 
+/* Private define  ---------------------------------------------------------*/
+//FATFS USBH_fatfs;
+#if 0
+//file operation
+FIL MyFile;
+FRESULT res;
+uint32_t bytesWritten;
+uint8_t rtext[200];
+uint8_t wtext[] = "USB Host Library : Mass Storage Example";
+#endif
+/* Private variables ---------------------------------------------------------*/
+extern ApplicationTypeDef Appli_state;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -80,7 +91,6 @@ void MX_USB_HOST_Process(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -91,7 +101,10 @@ void MX_USB_HOST_Process(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	uint16_t bytesread;
 
+	uint8_t debug_var = 0; //debug
+	uint8_t flag_test_write = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -135,6 +148,74 @@ int main(void)
     MX_USB_HOST_Process();
 
   /* USER CODE BEGIN 3 */
+    // set PG6 high
+    //HAL_GPIO_WritePin(GPIOG, GPIO_PIN_6, GPIO_PIN_SET);
+
+    if(Appli_state == APPLICATION_READY)
+    {
+    	if(flag_test_write == 0)
+    	{
+			flag_test_write = 1;
+			MSC_File_Operations();
+    	}
+    }
+
+
+    #if 0
+    if(f_open(&MyFile, "0:USBHost.txt",FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+	{
+    	debug_var = 1; //debug
+    	//LCD_ErrLog("Cannot Open 'USBHost.txt' file \n");
+	}
+    else
+    {
+    	// LCD_UsrLog("INFO : 'USBHost.txt' opened for write  \n");
+		res= f_write (&MyFile, wtext, sizeof(wtext), (void *)&bytesWritten);
+		f_close(&MyFile);
+
+		if((bytesWritten == 0) || (res != FR_OK)) /*EOF or Error*/
+		{
+		  //LCD_ErrLog("Cannot Write on the  'USBHost.txt' file \n");
+		}
+		else
+		{
+		  if(f_open(&MyFile, "0:USBHost.txt", FA_READ) != FR_OK)
+		  {
+			//LCD_ErrLog("Cannot Open 'USBHost.txt' file for read.\n");
+		  }
+		  else
+		  {
+			//LCD_UsrLog("INFO : Text written on the 'USBHost.txt' file \n");
+
+			res = f_read(&MyFile, rtext, sizeof(rtext), (void *)&bytesread);
+
+			if((bytesread == 0) || (res != FR_OK)) /*EOF or Error*/
+			{
+			  //LCD_ErrLog("Cannot Read from the  'USBHost.txt' file \n");
+			}
+			else
+			{
+			  //LCD_UsrLog("Read Text : \n");
+			  //LCD_DbgLog((char *)rtext);
+			  //LCD_DbgLog("\n");
+			}
+			f_close(&MyFile);
+		  }
+		  /* Compare read data with the expected data */
+		  if((bytesread == bytesWritten))
+		  {
+			//LCD_UsrLog("INFO : FatFs data compare SUCCES");
+			//LCD_UsrLog("\n");
+		  }
+		  else
+		  {
+			//LCD_ErrLog("FatFs data compare ERROR");
+			//LCD_ErrLog("\n");
+		  }
+		}
+
+    }
+	#endif
 
   }
   /* USER CODE END 3 */
@@ -165,8 +246,8 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 18;
-  RCC_OscInitStruct.PLL.PLLN = 150;
+  RCC_OscInitStruct.PLL.PLLM = 4;
+  RCC_OscInitStruct.PLL.PLLN = 96;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
   RCC_OscInitStruct.PLL.PLLR = 2;
@@ -190,8 +271,8 @@ void SystemClock_Config(void)
   }
 
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_CLK48;
-  PeriphClkInitStruct.PLLI2S.PLLI2SN = 144;
-  PeriphClkInitStruct.PLLI2S.PLLI2SM = 24;
+  PeriphClkInitStruct.PLLI2S.PLLI2SN = 72;
+  PeriphClkInitStruct.PLLI2S.PLLI2SM = 4;
   PeriphClkInitStruct.PLLI2S.PLLI2SR = 2;
   PeriphClkInitStruct.PLLI2S.PLLI2SQ = 3;
   PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
