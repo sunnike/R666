@@ -55,8 +55,16 @@ FATFS USBH_fatfs;
 FIL MyFile;
 FRESULT res;
 uint32_t bytesWritten;
-uint8_t rtext[200];
+uint8_t rtext[512];
 uint8_t wtext[] = "USB Host Library : Mass Storage Example";
+FRESULT res_write, res_read;
+FIL WriteFile, ReadFile;
+
+uint16_t loop_index;
+uint8_t blank_counter;
+
+//debug
+uint8_t flag_RWfailed = 0;
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -126,6 +134,100 @@ void MSC_File_Operations(void)
 		}
 	  }
 	}
+
+	// try to read .ima or .bin file
+	if(f_open(&ReadFile, "0:1911-R4-3.2.3-5D2F.ima", FA_READ) != FR_OK)
+	{
+		flag_RWfailed = 1;
+	}
+	else
+	{
+		// open a new file to store read file
+		if(f_open(&WriteFile, "0:read_output.ima",FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+		{
+			flag_RWfailed = 1;
+		}
+		else
+		{
+			do
+			{
+				res_read = f_read(&ReadFile, rtext, sizeof(rtext), (void *)&bytesread);
+				if((bytesread == 0) || (res_read != FR_OK)) /*EOF or Error*/
+				{
+					flag_RWfailed = 1;
+				}
+				else
+				{
+					// read success
+					/*
+					blank_counter = 0;
+					for(loop_index = 0; loop_index < sizeof(rtext); loop_index++)
+					{
+						if(rtext[sizeof(rtext)-loop_index-1] == '\0')
+						{
+							blank_counter++;
+						}
+						else
+						{
+							break;
+						}
+					}
+
+					if(blank_counter == 1)
+					{
+						blank_counter = 0;
+					}
+					*/
+
+					res_write= f_write (&WriteFile, rtext, sizeof(rtext) - blank_counter, (void *)&bytesWritten);
+					if((bytesWritten == 0) || (res_write != FR_OK)) /*EOF or Error*/
+					{
+						// write failed
+						flag_RWfailed = 1;
+					}
+					memset(rtext, '\0', sizeof(rtext));
+
+				}
+			}while(bytesread != 0);
+
+			f_close(&ReadFile);
+			f_close(&WriteFile);
+		}
+
+
+
+		#if 0
+
+		res = f_read(&MyFile, rtext, sizeof(rtext), (void *)&bytesread);
+		if((bytesread == 0) || (res != FR_OK)) /*EOF or Error*/
+		{
+			//LCD_ErrLog("Cannot Read from the  'USBHost.txt' file \n");
+		}
+		else
+		{
+			// read success
+			// write read content to new file
+			if(f_open(&MyFile, "0:read_output.hex",FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+			{
+			  //LCD_ErrLog("Cannot Open 'USBHost.txt' file \n");
+			}
+			else
+			{
+				res= f_write (&MyFile, rtext, sizeof(rtext), (void *)&bytesWritten);
+				f_close(&MyFile);
+
+				if((bytesWritten == 0) || (res != FR_OK)) /*EOF or Error*/
+				{
+					// write failed
+				}
+			}
+
+		}
+		f_close(&MyFile);
+		#endif
+	}
+
+
 
 
 

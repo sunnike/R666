@@ -60,6 +60,9 @@
 
 /* Private define ------------------------------------------------------------*/
 
+#define FM_MCU_HBLED_Pin GPIO_PIN_8
+#define FM_MCU_HBLED_GPIO_Port GPIOC
+
 /* ########################## Assert Selection ############################## */
 /**
   * @brief Uncomment the line below to expanse the "assert_param" macro in the 
