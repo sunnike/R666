@@ -25,6 +25,10 @@
 		<nature>fr.ac6.mcu.ide.core.MCUProjectNature</nature>
 	</natures>
 	<linkedResources><link>
+      <name>Application/User/usbh_platform.c</name>
+      <type>1</type>
+      <location>PARENT-2-PROJECT_LOC/Src/usbh_platform.c</location>
+    </link><link>
       <name>Middlewares/FatFs/ccsbcs.c</name>
       <type>1</type>
       <location>PARENT-2-PROJECT_LOC/Middlewares/Third_Party/FatFs/src/option/ccsbcs.c</location>

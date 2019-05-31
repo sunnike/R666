@@ -49,13 +49,14 @@
 
 
 #include "ff.h"
+#include "spi.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 FATFS USBH_fatfs;
 FIL MyFile;
 FRESULT res;
 uint32_t bytesWritten;
-uint8_t rtext[512];
+uint8_t rtext[4096];
 uint8_t wtext[] = "USB Host Library : Mass Storage Example";
 FRESULT res_write, res_read;
 FIL WriteFile, ReadFile;
@@ -65,6 +66,7 @@ uint8_t blank_counter;
 
 //debug
 uint8_t flag_RWfailed = 0;
+uint8_t flag_debug_spi = 0;
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -179,12 +181,40 @@ void MSC_File_Operations(void)
 					}
 					*/
 
+#if 0
 					res_write= f_write (&WriteFile, rtext, sizeof(rtext) - blank_counter, (void *)&bytesWritten);
 					if((bytesWritten == 0) || (res_write != FR_OK)) /*EOF or Error*/
 					{
 						// write failed
 						flag_RWfailed = 1;
 					}
+#endif
+
+
+					switch(HAL_SPI_Transmit(&hspi1, (uint8_t*)rtext, sizeof(rtext), 5000))
+					{
+						case HAL_OK:
+					      /* Communication is completed ___________________________________________ */
+							flag_debug_spi = 0;
+					      break;
+
+					    case HAL_TIMEOUT:
+					      /* A Timeout Occur ______________________________________________________*/
+					      /* Call Timeout Handler */
+					    	flag_debug_spi = 3;
+					      break;
+
+					      /* An Error Occur ______________________________________________________ */
+					    case HAL_ERROR:
+					      /* Call Timeout Handler */
+					    	flag_debug_spi = 1;
+					      break;
+
+					    default:
+					    	flag_debug_spi = 9;
+					      break;
+					}
+
 					memset(rtext, '\0', sizeof(rtext));
 
 				}
@@ -227,66 +257,6 @@ void MSC_File_Operations(void)
 		#endif
 	}
 
-
-
-
-
-  
-#if 0
-  //LCD_UsrLog("INFO : FatFs Initialized \n");
-  
-  if(f_open(&MyFile, "0:USBHost.txt",FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) 
-  {
-    //LCD_ErrLog("Cannot Open 'USBHost.txt' file \n");
-  }
-  else
-  {
-    //LCD_UsrLog("INFO : 'USBHost.txt' opened for write  \n");
-    res= f_write (&MyFile, wtext, sizeof(wtext), (void *)&bytesWritten); 
-    f_close(&MyFile);
-    
-    if((bytesWritten == 0) || (res != FR_OK)) /*EOF or Error*/
-    {
-      //LCD_ErrLog("Cannot Write on the  'USBHost.txt' file \n");
-    }
-    else
-    {
-      if(f_open(&MyFile, "0:USBHost.txt", FA_READ) != FR_OK) 
-      {
-        //LCD_ErrLog("Cannot Open 'USBHost.txt' file for read.\n");
-      }
-      else
-      {
-        //LCD_UsrLog("INFO : Text written on the 'USBHost.txt' file \n");
-        
-        res = f_read(&MyFile, rtext, sizeof(rtext), (void *)&bytesread);
-        
-        if((bytesread == 0) || (res != FR_OK)) /*EOF or Error*/
-        {
-          //LCD_ErrLog("Cannot Read from the  'USBHost.txt' file \n");
-        }
-        else
-        {
-          //LCD_UsrLog("Read Text : \n");
-          //LCD_DbgLog((char *)rtext);
-          //LCD_DbgLog("\n");
-        }
-        f_close(&MyFile);
-      }
-      /* Compare read data with the expected data */
-      if((bytesread == bytesWritten))
-      {
-        //LCD_UsrLog("INFO : FatFs data compare SUCCES");
-        //LCD_UsrLog("\n");
-      }
-      else
-      {
-        //LCD_ErrLog("FatFs data compare ERROR");
-        //LCD_ErrLog("\n");
-      }
-    }
-  }
-#endif
 
 }
 

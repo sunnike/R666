@@ -79,6 +79,9 @@ uint8_t wtext[] = "USB Host Library : Mass Storage Example";
 #endif
 /* Private variables ---------------------------------------------------------*/
 extern ApplicationTypeDef Appli_state;
+
+uint8_t flag_test_write = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -104,7 +107,7 @@ int main(void)
 	uint16_t bytesread;
 
 	uint8_t debug_var = 0; //debug
-	uint8_t flag_test_write = 0;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -126,7 +129,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_ADC1_Init();
-  MX_FSMC_Init();
   MX_I2C1_Init();
   MX_I2C2_Init();
   MX_RTC_Init();
@@ -135,6 +137,7 @@ int main(void)
   MX_USART6_UART_Init();
   MX_USB_HOST_Init();
   MX_FATFS_Init();
+  MX_FSMC_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

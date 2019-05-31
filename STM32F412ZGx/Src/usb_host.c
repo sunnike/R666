@@ -61,7 +61,7 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 unsigned char debug_mount = 0;
-//char USBDISKPath[4];            /* USB Host logical drive path */
+extern uint8_t flag_test_write;
 /* USER CODE END PV */
 
 /* USER CODE BEGIN PFP */
@@ -136,7 +136,7 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
   case HOST_USER_DISCONNECTION:
 	Appli_state = APPLICATION_DISCONNECT;
-	  if(f_mount(NULL, "", 0) != FR_OK)
+	if(f_mount(NULL, "", 0) != FR_OK)
 	{
 	  //LCD_ErrLog("ERROR : Cannot DeInitialize FatFs! \n");
 	}
@@ -144,6 +144,8 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 	{
 	  //LCD_ErrLog("ERROR : Cannot UnLink USB FatFS Driver! \n");
 	}
+
+	flag_test_write = 0;
 	break;
 
   case HOST_USER_CLASS_ACTIVE:
@@ -151,7 +153,7 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 	break;
 
   case HOST_USER_CONNECTION:
-	//Appli_state = APPLICATION_START;
+	Appli_state = APPLICATION_START;
 	if(FATFS_GetAttachedDriversNbr() == 0)
 	{
 		FATFS_LinkDriver(&USBH_Driver, USBHPath);
