@@ -60,6 +60,8 @@
 
 /* Private define ------------------------------------------------------------*/
 
+#define SPI1_CS_Pin GPIO_PIN_4
+#define SPI1_CS_GPIO_Port GPIOA
 #define FM_MCU_HBLED_Pin GPIO_PIN_8
 #define FM_MCU_HBLED_GPIO_Port GPIOC
 
@@ -71,6 +73,13 @@
 /* #define USE_FULL_ASSERT    1U */
 
 /* USER CODE BEGIN Private defines */
+#define IMA_FILE_SIZE         32*1024*1024  // 32MB
+#define SPI_READ_BUFFER_SIZE  256           // advice 256byte, test 1024 byte
+#define SPI_WRITE_BUFFER_SIZE 256           // advice 256byte, test 2048 byte
+#define SPI_READ_LOOP_LIMIT   IMA_FILE_SIZE/SPI_READ_BUFFER_SIZE
+//#define SPI_WRITE_LOOP_LIMIT  IMA_FILE_SIZE/SPI_WRITE_BUFFER_SIZE
+
+
 void MSC_File_Operations(void);
 /* USER CODE END Private defines */
 

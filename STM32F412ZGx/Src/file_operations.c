@@ -56,13 +56,21 @@ FATFS USBH_fatfs;
 FIL MyFile;
 FRESULT res;
 uint32_t bytesWritten;
-uint8_t rtext[4096];
+uint8_t rtext[SPI_WRITE_BUFFER_SIZE];
 uint8_t wtext[] = "USB Host Library : Mass Storage Example";
 FRESULT res_write, res_read;
 FIL WriteFile, ReadFile;
 
-uint16_t loop_index;
+uint32_t loop_index;
 uint8_t blank_counter;
+
+// fast read data: {command, ADD1, ADD2, ADD3, Dummy}
+uint8_t flash_command_read[] = {0x0B, 0x00, 0x00, 0x00, 0x00};
+uint8_t flash_program[] = {0x12, 0x00, 0x00, 0x00, 0x00};
+uint8_t falsh_command_write_enable[] = {0x06};
+uint8_t falsh_command_write_disable[] = {0x04};
+uint8_t flash_command_erase[] = {0xC7};
+uint8_t flash_data_read[SPI_READ_BUFFER_SIZE];
 
 //debug
 uint8_t flag_RWfailed = 0;
@@ -136,6 +144,24 @@ void MSC_File_Operations(void)
 		}
 	  }
 	}
+
+	// read flash MX25L12835F
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+
+	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_command_read, sizeof(flash_command_read), 5000) == HAL_OK)
+	{
+		for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
+		{
+			if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
+			{
+				break;
+			}
+		}
+	}
+
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+
+
 
 	// try to read .ima or .bin file
 	if(f_open(&ReadFile, "0:1911-R4-3.2.3-5D2F.ima", FA_READ) != FR_OK)

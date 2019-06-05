@@ -68,15 +68,7 @@
 /* USER CODE BEGIN PV */
 
 /* Private define  ---------------------------------------------------------*/
-//FATFS USBH_fatfs;
-#if 0
-//file operation
-FIL MyFile;
-FRESULT res;
-uint32_t bytesWritten;
-uint8_t rtext[200];
-uint8_t wtext[] = "USB Host Library : Mass Storage Example";
-#endif
+
 /* Private variables ---------------------------------------------------------*/
 extern ApplicationTypeDef Appli_state;
 
