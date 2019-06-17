@@ -60,7 +60,7 @@
 #include "fsmc.h"
 
 /* USER CODE BEGIN Includes */
-
+#include <stdarg.h>
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -74,6 +74,10 @@ extern ApplicationTypeDef Appli_state;
 
 uint8_t flag_test_write = 0;
 
+
+#if AEWIN_DBUG
+char dbg_buff[PRINT_BUFF];
+#endif
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -131,7 +135,7 @@ int main(void)
   MX_FATFS_Init();
   MX_FSMC_Init();
   /* USER CODE BEGIN 2 */
-
+  //aewin_dbg("aewin test message\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -291,7 +295,18 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void aewin_dbg(char *fmt,...){
+	int i = 0;
+	static va_list arg_ptr;
+	va_start (arg_ptr, fmt);
+	vsnprintf(dbg_buff, PRINT_BUFF, fmt, arg_ptr);
+	while(i < (PRINT_BUFF - 1) && dbg_buff[i]){
+		if (HAL_UART_Transmit_DMA(&huart2, (uint8_t*)&dbg_buff[i], 1) == HAL_OK){
+			i++;
+		}
+	}
+	va_end(arg_ptr);
+}
 /* USER CODE END 4 */
 
 /**

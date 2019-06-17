@@ -82,13 +82,20 @@
 // ----------------
 // flash commands - MT25QL512ABB
 // ----------------
-#define FLASH_CMD_READ               0x0B
+#define FLASH_CMD_READ               0x13
 #define FLASH_CMD_READ_STATUS        0x05
 #define FLASH_CMD_WRITE_ENABLE       0x06
+#define FLASH_CMD_WRITE_DISABLE      0x04
 #define FLASH_CMD_CLEAR_FLAG         0x50
 #define FLASH_CMD_WRITE_STATUS       0x01
 #define FLASH_CMD_BULK_ERASE         0xC7
-#define FLASH_CMD_PAGE_PROGRAM       0x02
+#define FLASH_CMD_PAGE_PROGRAM       0x12
+
+ /** @defgroup AEWIN_DEBUG Aewin Debug Configuration
+   * @{
+   */
+#define AEWIN_DBUG			(1)
+#define PRINT_BUFF			(128)
 
 
 void MSC_File_Operations(void);
@@ -97,6 +104,8 @@ void flash_write_enable(void);
 void flash_bulk_erase(void);
 void flash_clear_flag_status_reg(void);
 void flash_write_status_reg(char write_value);
+
+void aewin_dbg(char *fmt,...);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
