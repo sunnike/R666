@@ -79,8 +79,24 @@
 #define SPI_READ_LOOP_LIMIT   IMA_FILE_SIZE/SPI_READ_BUFFER_SIZE
 //#define SPI_WRITE_LOOP_LIMIT  IMA_FILE_SIZE/SPI_WRITE_BUFFER_SIZE
 
+// ----------------
+// flash commands - MT25QL512ABB
+// ----------------
+#define FLASH_CMD_READ               0x0B
+#define FLASH_CMD_READ_STATUS        0x05
+#define FLASH_CMD_WRITE_ENABLE       0x06
+#define FLASH_CMD_CLEAR_FLAG         0x50
+#define FLASH_CMD_WRITE_STATUS       0x01
+#define FLASH_CMD_BULK_ERASE         0xC7
+#define FLASH_CMD_PAGE_PROGRAM       0x02
+
 
 void MSC_File_Operations(void);
+void flash_check_status_reg(char target_value);
+void flash_write_enable(void);
+void flash_bulk_erase(void);
+void flash_clear_flag_status_reg(void);
+void flash_write_status_reg(char write_value);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

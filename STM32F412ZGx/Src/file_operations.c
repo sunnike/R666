@@ -66,15 +66,23 @@ uint8_t blank_counter;
 
 // fast read data: {command, ADD1, ADD2, ADD3, Dummy}
 uint8_t flash_command_read[] = {0x0B, 0x00, 0x00, 0x00, 0x00};
-uint8_t flash_program[] = {0x12, 0x00, 0x00, 0x00, 0x00};
-uint8_t falsh_command_write_enable[] = {0x06};
-uint8_t falsh_command_write_disable[] = {0x04};
-uint8_t flash_command_erase[] = {0xC7};
-uint8_t flash_data_read[SPI_READ_BUFFER_SIZE];
+uint8_t flash_program[] = {FLASH_CMD_PAGE_PROGRAM, 0x00, 0x00, 0x00, 0x00};
+uint8_t flash_command_write_status[] = {FLASH_CMD_WRITE_STATUS, 0x00};
+uint8_t flash_cmd_read_status[] = {FLASH_CMD_READ_STATUS};
+uint8_t flash_cmd_write_enable[] = {FLASH_CMD_WRITE_ENABLE};
+uint8_t flash_cmd_clear_flag[] = {FLASH_CMD_CLEAR_FLAG};
+uint8_t flash_cmd_bulk_erase[] = {FLASH_CMD_BULK_ERASE};
+uint8_t flash_cmd_read_device_id [] = {0x9F};
+
+volatile uint8_t flash_data_read[SPI_READ_BUFFER_SIZE];
+volatile uint8_t flash_data_read_byte[1];
+
+uint32_t flash_program_address = 0;
 
 //debug
 uint8_t flag_RWfailed = 0;
 uint8_t flag_debug_spi = 0;
+uint8_t flash_test_data[SPI_READ_BUFFER_SIZE];
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -146,6 +154,7 @@ void MSC_File_Operations(void)
 	}
 
 	// read flash MX25L12835F
+	/*
 	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
 
 	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_command_read, sizeof(flash_command_read), 5000) == HAL_OK)
@@ -160,6 +169,146 @@ void MSC_File_Operations(void)
 	}
 
 	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+	*/
+	//----------------------------------------------------------------
+
+
+	// read device ID
+	/*
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+
+	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read_device_id, sizeof(flash_cmd_read_device_id), 5000) == HAL_OK)
+	{
+		for(loop_index = 0; loop_index < 1; loop_index++)
+		{
+			if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, 2, 5000) != HAL_OK)
+			{
+				break;
+			}
+		}
+	}
+
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+	*/
+	//----------------------------------------------------------------
+
+	//erase flash MX25L12835F, and read back to check 0xFF
+
+	//--------------------------------
+	// Unlock flash
+	//--------------------------------
+	// READ STATUS REGISTER - wait 0x00
+	flash_check_status_reg(0x00);
+
+	// WRITE ENABLE
+	flash_write_enable();
+
+	// CLEAR FLAG STATUS REGISTER
+	flash_clear_flag_status_reg();
+
+	// FLASH_CMD_WRITE_STATUS
+	flash_write_status_reg(0x00);
+
+	// READ STATUS REGISTER - wait 0x00
+	flash_check_status_reg(0x00);
+
+	//--------------------------------
+	// Erase flash
+	//--------------------------------
+	// WRITE ENABLE
+	flash_write_enable();
+
+	// READ STATUS REGISTER - wait 0x02
+	flash_check_status_reg(0x02);
+
+	// READ STATUS REGISTER - wait 0x02
+	flash_check_status_reg(0x02);
+
+	// WRITE ENABLE
+	flash_write_enable();
+
+	// BULK ERASE
+	flash_bulk_erase();
+
+	// READ STATUS REGISTER - wait 0x00
+	flash_check_status_reg(0x00);
+
+	//--------------------------------
+	// Read flash
+	//--------------------------------
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_command_read, sizeof(flash_command_read), 5000) == HAL_OK)
+	{
+		for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
+		{
+			if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
+			{
+				break;
+			}
+		}
+	}
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+
+	//----------------------------------------------------------------
+
+	//--------------------------------
+	// Program flash
+	//--------------------------------
+	// READ STATUS REGISTER - wait 0x00
+	flash_check_status_reg(0x00);
+
+	// WRITE ENABLE
+	flash_write_enable();
+
+	// CLEAR FLAG STATUS REGISTER
+	flash_clear_flag_status_reg();
+
+	// FLASH_CMD_WRITE_STATUS
+	flash_write_status_reg(0x00);
+
+	// READ STATUS REGISTER - wait 0x00
+	flash_check_status_reg(0x00);
+
+	// WRITE ENABLE
+	flash_write_enable();
+
+	// program flash
+	for(loop_index = 0; loop_index < 256; loop_index++)
+	{
+		flash_test_data[loop_index] = loop_index;
+	}
+	flash_program_address = 0x00000000;
+	flash_program[1] = 0x00;
+	flash_program[2] = 0x00;
+	flash_program[3] = 0x00;
+	flash_program[4] = 0x00;
+
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+	//if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_program, sizeof(flash_program), 5000) == HAL_OK)
+	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_program, sizeof(flash_program), 5000) == HAL_OK)
+	{
+		HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_test_data, sizeof(flash_test_data), 5000);
+		// 1 page is 256 byte => 0x100
+		// address need to add 0x100 each time
+		//flash_program_address = flash_program_address + SPI_WRITE_BUFFER_SIZE;
+		//flash_program[1] = (flash_program_address & 0x11000000) >> 6;
+		//flash_program[2] = (flash_program_address & 0x00110000) >> 4;
+		//flash_program[3] = (flash_program_address & 0x00001100) >> 2;
+		//flash_program[4] = (flash_program_address & 0x00000011) >> 0;
+
+	}
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+
+	// READ STATUS REGISTER - wait 0x00
+	flash_check_status_reg(0x00);
+
+
+
+
+
+
+
+	//----------------------------------------------------------------
 
 
 
@@ -285,5 +434,71 @@ void MSC_File_Operations(void)
 
 
 }
+
+/**
+  * @brief  Check status register of flash
+  * @param  target_value: wait status register be the the same value with target_value
+  * @retval None
+  */
+void flash_check_status_reg(char target_value)
+{
+	do
+	{
+		HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+		HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read_status, sizeof(flash_cmd_read_status), 5000);
+		HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read_byte, sizeof(flash_data_read_byte), 5000);
+		HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+	}while(flash_data_read_byte[0] != target_value);
+
+}
+
+/**
+  * @brief  Make flash be write enable
+  * @param  None
+  * @retval None
+  */
+void flash_write_enable(void)
+{
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_write_enable, sizeof(flash_cmd_write_enable), 5000);
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+}
+
+/**
+  * @brief  Erase whole flash
+  * @param  None
+  * @retval None
+  */
+void flash_bulk_erase(void)
+{
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_bulk_erase, sizeof(flash_cmd_bulk_erase), 5000);
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+}
+
+/**
+  * @brief  clear flag status register of flash
+  * @param  None
+  * @retval None
+  */
+void flash_clear_flag_status_reg(void)
+{
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_clear_flag, sizeof(flash_cmd_clear_flag), 5000);
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+}
+
+/**
+  * @brief  write status register of flash
+  * @param  None
+  * @retval None
+  */
+void flash_write_status_reg(char write_value)
+{
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_command_write_status, sizeof(flash_command_write_status), 5000);
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+}
+
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
