@@ -73,15 +73,55 @@
 /* #define USE_FULL_ASSERT    1U */
 
 /* USER CODE BEGIN Private defines */
+// --------------------------------
+// Firmware version
+// --------------------------------
+#define VER_MAJOR 0
+#define VER_MINOR 0
+#define VER_PATCH 0
+
+// --------------------------------
+// I2C Information
+// --------------------------------
+#define I2C2_FPGA_ADDR 0xB0                  //FPGA device address
+
+// --------------------------------
+// FPGA Information
+// --------------------------------
+#define FPGA_KEY_SIZE         8
+#define FPGA_INFO_SIZE        6
+#define FPGA_SPI_SWITCH_SIZE  1
+#define FPGA_SPI_MODE_SIZE    1
+#define FPGA_BUSY_STATUS_SIZE 4
+
+#define FPGA_KEY_BASE_ADDR         0x00
+#define FPGA_INFO_BASE_ADDR        0x08
+#define FPGA_SPI_SWITCH_ADDR       0x10
+#define FPGA_SPI_MODE_ADDR         0x11
+#define FPGA_BUSY_STATUS_BASE_ADDR 0x14
+
+#define FPGA_SPI_SWITCH_ON   0x01
+#define FPGA_SPI_SWITCH_OFF  0x00
+
+// --------------------------------
+// FLASH Information
+// --------------------------------
+#define FLASH_NUM            4
+
+#define FLASH_SELECT_NONE    0x00
+
+// --------------------------------
+// SPI Information
+// --------------------------------
 #define IMA_FILE_SIZE         32*1024*1024  // 32MB
 #define SPI_READ_BUFFER_SIZE  256           // advice 256byte, test 1024 byte
 #define SPI_WRITE_BUFFER_SIZE 256           // advice 256byte, test 2048 byte
 #define SPI_READ_LOOP_LIMIT   IMA_FILE_SIZE/SPI_READ_BUFFER_SIZE
 //#define SPI_WRITE_LOOP_LIMIT  IMA_FILE_SIZE/SPI_WRITE_BUFFER_SIZE
 
-// ----------------
-// flash commands - MT25QL512ABB
-// ----------------
+// --------------------------------
+// Flash commands - MT25QL512ABB
+// --------------------------------
 #define FLASH_CMD_READ               0x13
 #define FLASH_CMD_READ_STATUS        0x05
 #define FLASH_CMD_WRITE_ENABLE       0x06
@@ -106,6 +146,8 @@ void flash_clear_flag_status_reg(void);
 void flash_write_status_reg(char write_value);
 
 void aewin_dbg(char *fmt,...);
+void i2c2_fpga_write(char base_addr, char data_len, char *pData);
+void i2c2_fpga_read(char base_addr, char data_len, char *pData);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

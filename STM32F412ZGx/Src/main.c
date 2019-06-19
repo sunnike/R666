@@ -74,6 +74,14 @@ extern ApplicationTypeDef Appli_state;
 
 uint8_t flag_test_write = 0;
 
+uint8_t fpga_key[FPGA_KEY_SIZE] = {'A','E','W','I','N','1','6','8'};
+uint8_t fpga_spi_switch = FPGA_SPI_SWITCH_OFF;
+uint8_t fpga_spi_mode = FLASH_SELECT_NONE;
+//uint8_t fpga_key_write_buffer[2];
+uint8_t fpga_key_read_buffer[1];
+uint8_t fpga_key_readback[FPGA_KEY_SIZE];
+uint8_t fpga_info[FPGA_INFO_SIZE];
+uint8_t fpga_busy_status[FPGA_BUSY_STATUS_SIZE];
 
 #if AEWIN_DBUG
 char dbg_buff[PRINT_BUFF];
@@ -101,6 +109,8 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	uint16_t bytesread;
+
+	uint8_t loop_index;
 
 	uint8_t debug_var = 0; //debug
 
@@ -150,6 +160,98 @@ int main(void)
     // set PG6 high
     //HAL_GPIO_WritePin(GPIOG, GPIO_PIN_6, GPIO_PIN_SET);
 
+    // [debug]
+	// LED light on
+    //HAL_GPIO_WritePin(FM_MCU_HBLED_GPIO_Port, FM_MCU_HBLED_Pin, GPIO_PIN_SET);
+
+    // Unlock FPGA key
+    i2c2_fpga_write(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key);
+
+    // Read FPGA key
+    i2c2_fpga_read(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key_readback);
+
+    // Read FPGA information - version and time
+    i2c2_fpga_read(FPGA_INFO_BASE_ADDR, FPGA_INFO_SIZE, (uint8_t*)fpga_info);
+
+    do
+	{
+    	// Read FPGA Busy byte and status1 byte
+		i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
+		HAL_Delay(1000);
+	}while( (fpga_busy_status[0] != 0) && (fpga_busy_status[1] != 0));
+
+
+    // enable FPGA SPI
+    fpga_spi_switch = FPGA_SPI_SWITCH_ON;
+    i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
+
+    // select 4 flash in turn
+    for(loop_index = 0; loop_index < FLASH_NUM; loop_index++)
+    {
+    	fpga_spi_mode = loop_index + 1;
+    	i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
+
+    	HAL_Delay(1000);
+    }
+
+    /*
+    // write key
+    for(loop_index = 0; loop_index < FPGA_KEY_SIZE; loop_index++)
+    {
+    	fpga_key_write_buffer[0] = FPGA_KEY_BASE_ADDR + loop_index;
+    	fpga_key_write_buffer[1] = fpga_key[loop_index];
+    	if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)fpga_key_write_buffer, 2, 10000) != HAL_OK)
+		{
+			flag_test_write = 0xE1;
+		}
+    }
+
+    // read key
+    for(loop_index = 0; loop_index < FPGA_KEY_SIZE; loop_index++)
+	{
+		fpga_key_write_buffer[0] = FPGA_KEY_BASE_ADDR + loop_index;
+		if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)fpga_key_write_buffer, 1, 10000) != HAL_OK)
+		{
+			flag_test_write = 0xE2;
+		}
+
+		if(HAL_I2C_Master_Receive(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)fpga_key_read_buffer, 1, 10000) != HAL_OK)
+		{
+			flag_test_write = 0xE3;
+		}
+		fpga_key_readback[loop_index] = fpga_key_read_buffer[0];
+	}
+
+    // read info
+    for(loop_index = 0; loop_index < FPGA_INFO_SIZE; loop_index++)
+	{
+		fpga_key_write_buffer[0] = FPGA_INFO_BASE_ADDR + loop_index;
+		if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)fpga_key_write_buffer, 1, 10000) != HAL_OK)
+		{
+			flag_test_write = 0xE3;
+		}
+
+		if(HAL_I2C_Master_Receive(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)fpga_key_read_buffer, 1, 10000) != HAL_OK)
+		{
+			flag_test_write = 0xE4;
+		}
+		fpga_key_readback[loop_index] = fpga_key_read_buffer[0];
+	}
+
+    // enable SPI
+    for(loop_index = 0; loop_index < FPGA_SPI_SWITCH_SIZE; loop_index++)
+	{
+		fpga_key_write_buffer[0] = FPGA_SPI_SWITCH_ADDR + loop_index;
+		fpga_key_write_buffer[1] = 0x01;
+		if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)fpga_key_write_buffer, 2, 10000) != HAL_OK)
+		{
+			flag_test_write = 0xE1;
+		}
+	}
+    */
+
+
+
     if(Appli_state == APPLICATION_READY)
     {
     	if(flag_test_write == 0)
@@ -159,62 +261,6 @@ int main(void)
     	}
     }
 
-
-    #if 0
-    if(f_open(&MyFile, "0:USBHost.txt",FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
-	{
-    	debug_var = 1; //debug
-    	//LCD_ErrLog("Cannot Open 'USBHost.txt' file \n");
-	}
-    else
-    {
-    	// LCD_UsrLog("INFO : 'USBHost.txt' opened for write  \n");
-		res= f_write (&MyFile, wtext, sizeof(wtext), (void *)&bytesWritten);
-		f_close(&MyFile);
-
-		if((bytesWritten == 0) || (res != FR_OK)) /*EOF or Error*/
-		{
-		  //LCD_ErrLog("Cannot Write on the  'USBHost.txt' file \n");
-		}
-		else
-		{
-		  if(f_open(&MyFile, "0:USBHost.txt", FA_READ) != FR_OK)
-		  {
-			//LCD_ErrLog("Cannot Open 'USBHost.txt' file for read.\n");
-		  }
-		  else
-		  {
-			//LCD_UsrLog("INFO : Text written on the 'USBHost.txt' file \n");
-
-			res = f_read(&MyFile, rtext, sizeof(rtext), (void *)&bytesread);
-
-			if((bytesread == 0) || (res != FR_OK)) /*EOF or Error*/
-			{
-			  //LCD_ErrLog("Cannot Read from the  'USBHost.txt' file \n");
-			}
-			else
-			{
-			  //LCD_UsrLog("Read Text : \n");
-			  //LCD_DbgLog((char *)rtext);
-			  //LCD_DbgLog("\n");
-			}
-			f_close(&MyFile);
-		  }
-		  /* Compare read data with the expected data */
-		  if((bytesread == bytesWritten))
-		  {
-			//LCD_UsrLog("INFO : FatFs data compare SUCCES");
-			//LCD_UsrLog("\n");
-		  }
-		  else
-		  {
-			//LCD_ErrLog("FatFs data compare ERROR");
-			//LCD_ErrLog("\n");
-		  }
-		}
-
-    }
-	#endif
 
   }
   /* USER CODE END 3 */
@@ -306,6 +352,45 @@ void aewin_dbg(char *fmt,...){
 		}
 	}
 	va_end(arg_ptr);
+}
+
+void i2c2_fpga_write(char base_addr, char data_len, char *pData)
+{
+	char local_index;
+	char write_buffer[2];
+
+	for(local_index = 0; local_index < data_len; local_index++)
+	{
+		write_buffer[0] = base_addr + local_index;
+		write_buffer[1] = pData[local_index];
+		if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)write_buffer, 2, 10000) != HAL_OK)
+		{
+			flag_test_write = 0xE1;
+		}
+	}
+}
+
+void i2c2_fpga_read(char base_addr, char data_len, char *pData)
+{
+	char local_index;
+	char fpga_read_addr;
+	char read_buffer;
+
+	for(local_index = 0; local_index < data_len; local_index++)
+	{
+		fpga_read_addr = base_addr + local_index;
+		if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, &(fpga_read_addr), 1, 10000) != HAL_OK)
+		{
+			flag_test_write = 0xE2;
+		}
+
+		if(HAL_I2C_Master_Receive(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, &(read_buffer), 1, 10000) != HAL_OK)
+		{
+			flag_test_write = 0xE3;
+		}
+		pData[local_index] = read_buffer;
+	}
+
 }
 /* USER CODE END 4 */
 

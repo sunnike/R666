@@ -298,7 +298,6 @@ void MSC_File_Operations(void)
 
 	// read .ima file from USB disk
 
-	// not finish yet
 	if(f_open(&ReadFile, "0:1911-R4-3.2.3-5D2F.ima", FA_READ) != FR_OK)
 	{
 		flag_RWfailed = 1;
@@ -343,6 +342,24 @@ void MSC_File_Operations(void)
 
 		f_close(&ReadFile);
 	}
+
+	//--------------------------------
+	// Read flash
+	//--------------------------------
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_command_read, sizeof(flash_command_read), 5000) == HAL_OK)
+	{
+		//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
+		for(loop_index = 0; loop_index < 5; loop_index++) //test
+		{
+			if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
+			{
+				break;
+			}
+		}
+	}
+	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+	//----------------------------------------------------------------
 
 
 
@@ -396,22 +413,7 @@ void MSC_File_Operations(void)
 	*/
 
 	//----------------------------------------------------------------
-	//--------------------------------
-	// Read flash
-	//--------------------------------
-	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_command_read, sizeof(flash_command_read), 5000) == HAL_OK)
-	{
-		//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
-		for(loop_index = 0; loop_index < 5; loop_index++) //test
-		{
-			if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
-			{
-				break;
-			}
-		}
-	}
-	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+
 
 
 
