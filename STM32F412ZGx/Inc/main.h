@@ -80,6 +80,18 @@
 #define VER_MINOR 0
 #define VER_PATCH 0
 
+
+// --------------------------------
+// USB Information
+// --------------------------------
+typedef enum{
+  USB_CMD_NONE       = 0x00, /*!< Specifies the command for none. */
+  USB_CMD_READ_LOG   = 0x01, /*!< Specifies the command for read log and save to USB disk. */
+  USB_CMD_UPDATE_IMA = 0x02, /*!< Specifies the command for update flash with .ima file in USB disk. */
+  USB_CMD_1          = 0x03, /*!< Specifies the command for none. */
+  USB_CMD_2          = 0x14  /*!< Specifies the command for none. */
+}eUSB_Cmds;
+
 // --------------------------------
 // I2C Information
 // --------------------------------
@@ -130,6 +142,20 @@
 #define FLASH_CMD_WRITE_STATUS       0x01
 #define FLASH_CMD_BULK_ERASE         0xC7
 #define FLASH_CMD_PAGE_PROGRAM       0x12
+
+
+/** @defgroup Timer_Flag_Enumeration_definition Timer Flags definitio
+  * @brief  Timer Flags definition
+  * @{
+  */
+typedef enum{
+  flag_idle   = 0x01, /*!< Specifies the timer "idle" states. This bit-masking is used to set/clear time_states when timer is idle. */
+  flag_1ms    = 0x02, /*!< Specifies the timer "1ms" states. This bit-masking is used to set/clear time_states in every 1ms. */
+  flag_10ms   = 0x04, /*!< Specifies the timer "10ms" states. This bit-masking is used to set/clear time_states in every 10ms. */
+  flag_100ms  = 0x08, /*!< Specifies the timer "100ms" states. This bit-masking is used to set/clear time_states in every 100ms. */
+  flag_1s     = 0x10  /*!< Specifies the timer "1s" states. This bit-masking is used to set/clear time_states in every 1s. */
+}eTimer_Flags;
+
 
  /** @defgroup AEWIN_DEBUG Aewin Debug Configuration
    * @{

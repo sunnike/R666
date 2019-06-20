@@ -9,7 +9,6 @@
 
 <filestoremove>
     <file>
-    <name>..\Src\dma.c</name>
     </file>
 </filestoremove>
 
@@ -247,6 +246,10 @@
 
                                 <file>
                                  <name>..\Src\spi.c</name>
+                                </file>
+
+                                <file>
+                                 <name>..\Src\tim.c</name>
                                 </file>
 
                                 <file>

@@ -54,6 +54,7 @@
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "usb_host.h"
 #include "gpio.h"
@@ -78,10 +79,16 @@ uint8_t fpga_key[FPGA_KEY_SIZE] = {'A','E','W','I','N','1','6','8'};
 uint8_t fpga_spi_switch = FPGA_SPI_SWITCH_OFF;
 uint8_t fpga_spi_mode = FLASH_SELECT_NONE;
 //uint8_t fpga_key_write_buffer[2];
-uint8_t fpga_key_read_buffer[1];
+//uint8_t fpga_key_read_buffer[1];
 uint8_t fpga_key_readback[FPGA_KEY_SIZE];
 uint8_t fpga_info[FPGA_INFO_SIZE];
 uint8_t fpga_busy_status[FPGA_BUSY_STATUS_SIZE];
+
+uint8_t usb_cmd_code = USB_CMD_NONE;
+
+// extern
+extern volatile unsigned char time_states;
+
 
 #if AEWIN_DBUG
 char dbg_buff[PRINT_BUFF];
@@ -144,8 +151,32 @@ int main(void)
   MX_USB_HOST_Init();
   MX_FATFS_Init();
   MX_FSMC_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  //aewin_dbg("aewin test message\n");
+
+  //while(1)
+  //{
+  //	  aewin_dbg("aewin test message\n");
+  //	  HAL_Delay(500);
+  //}
+
+
+  //--------------------------------
+  // Unlock FPGA key
+  i2c2_fpga_write(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key);
+
+  // Read FPGA key
+  i2c2_fpga_read(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key_readback);
+
+  // Read FPGA information - version and time
+  i2c2_fpga_read(FPGA_INFO_BASE_ADDR, FPGA_INFO_SIZE, (uint8_t*)fpga_info);
+
+  // Read FPGA Busy byte and status1 byte
+  i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
+  //--------------------------------
+
+  /*Start the TIM Base generation in interrupt mode ####################*/
+    HAL_TIM_Base_Start_IT(&htim3);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -164,35 +195,19 @@ int main(void)
 	// LED light on
     //HAL_GPIO_WritePin(FM_MCU_HBLED_GPIO_Port, FM_MCU_HBLED_Pin, GPIO_PIN_SET);
 
-    // Unlock FPGA key
-    i2c2_fpga_write(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key);
+    //----------------------------------------------------------
+	/*================== 1s Routine ================== */
+	if (time_states & flag_1s){
+		time_states &= ~flag_1s; // Clear flag.
 
-    // Read FPGA key
-    i2c2_fpga_read(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key_readback);
-
-    // Read FPGA information - version and time
-    i2c2_fpga_read(FPGA_INFO_BASE_ADDR, FPGA_INFO_SIZE, (uint8_t*)fpga_info);
-
-    do
-	{
-    	// Read FPGA Busy byte and status1 byte
-		i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
-		HAL_Delay(1000);
-	}while( (fpga_busy_status[0] != 0) && (fpga_busy_status[1] != 0));
-
-
-    // enable FPGA SPI
-    fpga_spi_switch = FPGA_SPI_SWITCH_ON;
-    i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
-
-    // select 4 flash in turn
-    for(loop_index = 0; loop_index < FLASH_NUM; loop_index++)
-    {
-    	fpga_spi_mode = loop_index + 1;
-    	i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
-
-    	HAL_Delay(1000);
-    }
+		if(Appli_state == APPLICATION_READY)
+		{
+			// check FPGA busy status
+			// Read FPGA Busy byte and status1 byte
+			i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
+		}
+	}
+    //-----------------------------------
 
     /*
     // write key
@@ -254,11 +269,51 @@ int main(void)
 
     if(Appli_state == APPLICATION_READY)
     {
-    	if(flag_test_write == 0)
-    	{
-			flag_test_write = 1;
-			MSC_File_Operations();
-    	}
+
+    	// if FPGA is not busy
+    	// verify fpga_busy_status value
+		if( (fpga_busy_status[0] == 0) && (fpga_busy_status[1] == 0) )
+		{
+			// check aewin_file.txt
+			//MSC_File_Operations();
+			usb_cmd_code = USB_CMD_UPDATE_IMA;
+
+			switch(usb_cmd_code)
+			{
+				case USB_CMD_READ_LOG:
+					break;
+
+				case USB_CMD_UPDATE_IMA:
+					// enable FPGA SPI
+					fpga_spi_switch = FPGA_SPI_SWITCH_ON;
+					i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
+
+					// select 4 flash in turn
+					for(loop_index = 0; loop_index < FLASH_NUM; loop_index++)
+					{
+						fpga_spi_mode = loop_index + 1;
+						i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
+
+						HAL_Delay(1000);
+					}
+
+					// select first flash
+					fpga_spi_mode = 0x01;
+					i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
+
+					if(flag_test_write == 0)
+					{
+						flag_test_write = 1;
+						MSC_File_Operations();
+					}
+
+					break;
+
+				default:
+					break;
+			}
+		}
+
     }
 
 
@@ -347,7 +402,8 @@ void aewin_dbg(char *fmt,...){
 	va_start (arg_ptr, fmt);
 	vsnprintf(dbg_buff, PRINT_BUFF, fmt, arg_ptr);
 	while(i < (PRINT_BUFF - 1) && dbg_buff[i]){
-		if (HAL_UART_Transmit_DMA(&huart2, (uint8_t*)&dbg_buff[i], 1) == HAL_OK){
+		//if (HAL_UART_Transmit_DMA(&huart2, (uint8_t*)&dbg_buff[i], 1) == HAL_OK){
+		if (HAL_UART_Transmit(&huart2, (uint8_t*)&dbg_buff[i], 1, 5000) == HAL_OK){
 			i++;
 		}
 	}
