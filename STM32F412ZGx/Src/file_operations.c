@@ -64,10 +64,12 @@ FIL WriteFile, ReadFile;
 uint32_t loop_index;
 uint8_t blank_counter;
 
-// fast read data: {command, ADD1, ADD2, ADD3, Dummy}
-uint8_t flash_command_read[] = {FLASH_CMD_READ, 0x00, 0x00, 0x00, 0x00};
-uint8_t flash_program[] = {FLASH_CMD_PAGE_PROGRAM, 0x00, 0x00, 0x00, 0x00};
-uint8_t flash_command_write_status[] = {FLASH_CMD_WRITE_STATUS, 0x00};
+// ---------------
+// flash commands
+//----------------
+uint8_t flash_cmd_read[] = {FLASH_CMD_READ, 0x00, 0x00, 0x00, 0x00};             // fast read data: {command, ADD1, ADD2, ADD3, Dummy}
+uint8_t flash_cmd_program[] = {FLASH_CMD_PAGE_PROGRAM, 0x00, 0x00, 0x00, 0x00};
+uint8_t flash_cmd_write_status[] = {FLASH_CMD_WRITE_STATUS, 0x00};
 uint8_t flash_cmd_read_status[] = {FLASH_CMD_READ_STATUS};
 uint8_t flash_cmd_write_enable[] = {FLASH_CMD_WRITE_ENABLE};
 uint8_t flash_cmd_clear_flag[] = {FLASH_CMD_CLEAR_FLAG};
@@ -78,6 +80,7 @@ volatile uint8_t flash_data_read[SPI_READ_BUFFER_SIZE];
 volatile uint8_t flash_data_read_byte[1];
 
 uint32_t flash_program_address = 0;
+uint8_t usb_file_name[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:USBHost_RWtest.txt";
 
 //debug
 uint8_t flag_RWfailed = 0;
@@ -158,7 +161,7 @@ void MSC_File_Operations(void)
 
 	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
 
-	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_command_read, sizeof(flash_command_read), 5000) == HAL_OK)
+	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
 	{
 		//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
 		for(loop_index = 0; loop_index < 5; loop_index++) //test
@@ -243,7 +246,7 @@ void MSC_File_Operations(void)
 	// Read flash
 	//--------------------------------
 	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_command_read, sizeof(flash_command_read), 5000) == HAL_OK)
+	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
 	{
 		//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
 		for(loop_index = 0; loop_index < 5; loop_index++) //test
@@ -291,10 +294,10 @@ void MSC_File_Operations(void)
 		flash_test_data[loop_index] = loop_index;
 	}
 	flash_program_address = 0x00000000;
-	flash_program[1] = 0x00;
-	flash_program[2] = 0x00;
-	flash_program[3] = 0x00;
-	flash_program[4] = 0x00;
+	flash_cmd_program[1] = 0x00;
+	flash_cmd_program[2] = 0x00;
+	flash_cmd_program[3] = 0x00;
+	flash_cmd_program[4] = 0x00;
 
 	// read .ima file from USB disk
 
@@ -319,17 +322,17 @@ void MSC_File_Operations(void)
 
 				// program flash
 				HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-				if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_program, sizeof(flash_program), 5000) == HAL_OK)
+				if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_program, sizeof(flash_cmd_program), 5000) == HAL_OK)
 				{
 					HAL_SPI_Transmit(&hspi1, (uint8_t*)rtext, sizeof(rtext), 5000);
 
 					// 1 page is 256 byte => 0x100
 					// address need to add 0x100 each time
 					flash_program_address = flash_program_address + SPI_WRITE_BUFFER_SIZE;
-					flash_program[1] = (flash_program_address & 0xFF000000) >> (6*4);
-					flash_program[2] = (flash_program_address & 0x00FF0000) >> (4*4);
-					flash_program[3] = (flash_program_address & 0x0000FF00) >> (2*4);
-					flash_program[4] = (flash_program_address & 0x000000FF) >> (0*4);
+					flash_cmd_program[1] = (flash_program_address & 0xFF000000) >> (6*4);
+					flash_cmd_program[2] = (flash_program_address & 0x00FF0000) >> (4*4);
+					flash_cmd_program[3] = (flash_program_address & 0x0000FF00) >> (2*4);
+					flash_cmd_program[4] = (flash_program_address & 0x000000FF) >> (0*4);
 				}
 				HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
@@ -347,7 +350,7 @@ void MSC_File_Operations(void)
 	// Read flash
 	//--------------------------------
 	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_command_read, sizeof(flash_command_read), 5000) == HAL_OK)
+	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
 	{
 		//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
 		for(loop_index = 0; loop_index < 5; loop_index++) //test
@@ -372,17 +375,17 @@ void MSC_File_Operations(void)
 
 		// program flash
 		HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-		if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_program, sizeof(flash_program), 5000) == HAL_OK)
+		if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_program, sizeof(flash_cmd_program), 5000) == HAL_OK)
 		{
 			HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_test_data, sizeof(flash_test_data), 5000);
 
 			// 1 page is 256 byte => 0x100
 			// address need to add 0x100 each time
 			flash_program_address = flash_program_address + SPI_WRITE_BUFFER_SIZE;
-			flash_program[1] = (flash_program_address & 0xFF000000) >> (6*4);
-			flash_program[2] = (flash_program_address & 0x00FF0000) >> (4*4);
-			flash_program[3] = (flash_program_address & 0x0000FF00) >> (2*4);
-			flash_program[4] = (flash_program_address & 0x000000FF) >> (0*4);
+			flash_cmd_program[1] = (flash_program_address & 0xFF000000) >> (6*4);
+			flash_cmd_program[2] = (flash_program_address & 0x00FF0000) >> (4*4);
+			flash_cmd_program[3] = (flash_program_address & 0x0000FF00) >> (2*4);
+			flash_cmd_program[4] = (flash_program_address & 0x000000FF) >> (0*4);
 		}
 		HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
@@ -540,6 +543,242 @@ void MSC_File_Operations(void)
 
 }
 
+
+/**
+  * @brief  Files operations: Read/Write and compare
+  * @param  None
+  * @retval None
+  */
+void USB_MSC_File_Operations(unsigned char command_type)
+{
+	uint16_t bytesread;
+	uint16_t page_data_index;
+
+	switch(command_type)
+	{
+		case USB_CMD_READ_LOG:
+
+			break;
+
+		case USB_CMD_UPDATE_IMA:
+
+			aewin_dbg("Start erasing flash.\r\n");
+			flash_unlock();
+			flash_erase();
+			aewin_dbg("Erasing flash finished.\r\n");
+
+			flash_unlock();
+			//--------------------------------
+			// WRITE flash
+			//--------------------------------
+			// WRITE ENABLE
+			flash_write_enable();
+
+			// point to address 0x00000000 for starting programming
+			flash_program_address = 0x00000000;
+			flash_cmd_program[1] = 0x00;
+			flash_cmd_program[2] = 0x00;
+			flash_cmd_program[3] = 0x00;
+			flash_cmd_program[4] = 0x00;
+
+			// read .ima file from USB disk
+			aewin_dbg("Start programming flash.\r\n");
+			if(f_open(&ReadFile, "0:1911-R4-3.2.3-5D2F.ima", FA_READ) != FR_OK)
+			{
+				flag_RWfailed = 1;
+			}
+			else
+			{
+				do
+				{
+					// read 1-page data from .ima file
+					res_read = f_read(&ReadFile, rtext, sizeof(rtext), (void *)&bytesread);
+					if((bytesread == 0) || (res_read != FR_OK)) /*EOF or Error*/
+					{
+						flag_RWfailed = 1;
+					}
+					else
+					{
+						// program 1-page data to flash
+						// WRITE ENABLE
+						flash_write_enable();
+
+						// program flash
+						HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+						if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_program, sizeof(flash_cmd_program), 5000) == HAL_OK)
+						{
+							HAL_SPI_Transmit(&hspi1, (uint8_t*)rtext, sizeof(rtext), 5000);
+
+							// 1 page is 256 byte => 0x100
+							// address need to add 0x100 each time
+							flash_program_address = flash_program_address + SPI_WRITE_BUFFER_SIZE;
+							flash_cmd_program[1] = (flash_program_address & 0xFF000000) >> (6*4);
+							flash_cmd_program[2] = (flash_program_address & 0x00FF0000) >> (4*4);
+							flash_cmd_program[3] = (flash_program_address & 0x0000FF00) >> (2*4);
+							flash_cmd_program[4] = (flash_program_address & 0x000000FF) >> (0*4);
+						}
+						HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+
+						memset(rtext, '\0', sizeof(rtext));
+
+						// READ STATUS REGISTER - wait 0x00
+						flash_check_status_reg(0x00);
+					}
+				}while(bytesread != 0);
+
+				f_close(&ReadFile);
+			}
+			aewin_dbg("Programming finished!.\r\n");
+
+			// [debug]
+			// read flash 5 pages
+			HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+
+			if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
+			{
+				//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
+				for(loop_index = 0; loop_index < 5; loop_index++) //test
+				{
+					if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
+					{
+						break;
+					}
+
+					//print to uart2
+					aewin_dbg("\r\nPage %d ", loop_index);
+					for(page_data_index = 0; page_data_index < sizeof(flash_data_read); page_data_index++)
+					{
+						if(page_data_index % 16 == 0)
+						{
+							aewin_dbg("\r\n");
+						}
+						aewin_dbg("0x%02x ", flash_data_read[page_data_index]);
+					}
+				}
+			}
+
+			HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+
+
+			break;
+
+		case USB_CMD_READ_FLASH:
+			HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+
+			if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
+			{
+				//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
+				for(loop_index = 0; loop_index < 5; loop_index++) //test
+				{
+					if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
+					{
+						break;
+					}
+				}
+			}
+
+			HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+			break;
+
+		case USB_CMD_TEST_RW:
+			//LCD_UsrLog("INFO : FatFs Initialized \n");
+			if(f_open(&MyFile, usb_file_name,FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+			{
+			  //LCD_ErrLog("Cannot Open 'USBHost.txt' file \n");
+			}
+			else
+			{
+			  //LCD_UsrLog("INFO : 'USBHost.txt' opened for write  \n");
+			  res= f_write (&MyFile, wtext, sizeof(wtext), (void *)&bytesWritten);
+			  f_close(&MyFile);
+
+			  if((bytesWritten == 0) || (res != FR_OK)) /*EOF or Error*/
+			  {
+				//LCD_ErrLog("Cannot Write on the  'USBHost.txt' file \n");
+			  }
+			  else
+			  {
+				if(f_open(&MyFile, usb_file_name, FA_READ) != FR_OK)
+				{
+				  //LCD_ErrLog("Cannot Open 'USBHost.txt' file for read.\n");
+				}
+				else
+				{
+				  //LCD_UsrLog("INFO : Text written on the 'USBHost.txt' file \n");
+
+				  res = f_read(&MyFile, rtext, sizeof(rtext), (void *)&bytesread);
+
+				  if((bytesread == 0) || (res != FR_OK)) /*EOF or Error*/
+				  {
+					//LCD_ErrLog("Cannot Read from the  'USBHost.txt' file \n");
+				  }
+				  else
+				  {
+					//LCD_UsrLog("Read Text : \n");
+					//LCD_DbgLog((char *)rtext);
+					//LCD_DbgLog("\n");
+				  }
+				  f_close(&MyFile);
+				}
+				/* Compare read data with the expected data */
+				if((bytesread == bytesWritten))
+				{
+				  //LCD_UsrLog("INFO : FatFs data compare SUCCES");
+				  //LCD_UsrLog("\n");
+				}
+				else
+				{
+				  //LCD_ErrLog("FatFs data compare ERROR");
+				  //LCD_ErrLog("\n");
+				}
+			  }
+			}
+
+
+			//--------------
+			// try to read .txt file
+			if(f_open(&ReadFile, usb_file_name, FA_READ) != FR_OK)
+			{
+				flag_RWfailed = 1;
+			}
+			else
+			{
+				// open a new file to store read file
+				if(f_open(&WriteFile, "0:read_test_output.ima",FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+				{
+					flag_RWfailed = 1;
+				}
+				else
+				{
+					res_read = f_read(&ReadFile, rtext, sizeof(rtext), (void *)&bytesread);
+					if((bytesread == 0) || (res_read != FR_OK)) /*EOF or Error*/
+					{
+						flag_RWfailed = 1;
+					}
+					else
+					{
+						res= f_write (&WriteFile, rtext, sizeof(rtext), (void *)&bytesWritten);
+						f_close(&MyFile);
+
+						if((bytesWritten == 0) || (res != FR_OK)) /*EOF or Error*/
+						{
+							// write failed
+						}
+
+					}
+
+					f_close(&ReadFile);
+					f_close(&WriteFile);
+				}
+			}
+			break;
+
+		default:
+			break;
+
+	}
+}
+
 /**
   * @brief  Check status register of flash
   * @param  target_value: wait status register be the the same value with target_value
@@ -601,8 +840,55 @@ void flash_clear_flag_status_reg(void)
 void flash_write_status_reg(char write_value)
 {
 	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-	HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_command_write_status, sizeof(flash_command_write_status), 5000);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_write_status, sizeof(flash_cmd_write_status), 5000);
 	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+}
+
+/**
+  * @brief  unlock flash for writing
+  * @param  None
+  * @retval None
+  */
+void flash_unlock(void)
+{
+	// READ STATUS REGISTER - wait 0x00
+	flash_check_status_reg(0x00);
+
+	// WRITE ENABLE
+	flash_write_enable();
+
+	// CLEAR FLAG STATUS REGISTER
+	flash_clear_flag_status_reg();
+
+	// FLASH_CMD_WRITE_STATUS
+	flash_write_status_reg(0x00);
+
+	// READ STATUS REGISTER - wait 0x00
+	flash_check_status_reg(0x00);
+}
+
+void flash_erase(void)
+{
+	//--------------------------------
+	// Erase flash
+	//--------------------------------
+	// WRITE ENABLE
+	flash_write_enable();
+
+	// READ STATUS REGISTER - wait 0x02
+	flash_check_status_reg(0x02);
+
+	// READ STATUS REGISTER - wait 0x02
+	flash_check_status_reg(0x02);
+
+	// WRITE ENABLE
+	flash_write_enable();
+
+	// BULK ERASE
+	flash_bulk_erase();
+
+	// READ STATUS REGISTER - wait 0x00
+	flash_check_status_reg(0x00);
 }
 
 

@@ -154,13 +154,13 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-  //while(1)
-  //{
-  //	  aewin_dbg("aewin test message\n");
-  //	  HAL_Delay(500);
-  //}
+
+  aewin_dbg("================\r\n");
+  aewin_dbg("  R666 booting  \r\n");
+  aewin_dbg("================\r\n");
 
 
+  aewin_dbg("Unlock FPGA\r\n");
   //--------------------------------
   // Unlock FPGA key
   i2c2_fpga_write(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key);
@@ -170,9 +170,13 @@ int main(void)
 
   // Read FPGA information - version and time
   i2c2_fpga_read(FPGA_INFO_BASE_ADDR, FPGA_INFO_SIZE, (uint8_t*)fpga_info);
+  aewin_dbg("FPGA version: 20%d.%d.%d\r\n", fpga_info[0], fpga_info[1], fpga_info[2]);
+  aewin_dbg("FPGA build date: %d %d %d\r\n", fpga_info[5], fpga_info[4], fpga_info[3]);
 
   // Read FPGA Busy byte and status1 byte
   i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
+  aewin_dbg("FPGA busy bit: %x\r\n", fpga_busy_status[4]);
+  aewin_dbg("FPGA busy status: %x %x %x %x\r\n", fpga_busy_status[7], fpga_busy_status[6], fpga_busy_status[5]);
   //--------------------------------
 
   /*Start the TIM Base generation in interrupt mode ####################*/
@@ -181,6 +185,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+    aewin_dbg("===== Enter while loop =====\r\n", fpga_info[5], fpga_info[4], fpga_info[3]);
   while (1)
   {
 
@@ -270,48 +275,73 @@ int main(void)
     if(Appli_state == APPLICATION_READY)
     {
 
-    	// if FPGA is not busy
+    	// check if FPGA is not busy
     	// verify fpga_busy_status value
 		if( (fpga_busy_status[0] == 0) && (fpga_busy_status[1] == 0) )
 		{
-			// check aewin_file.txt
-			//MSC_File_Operations();
-			usb_cmd_code = USB_CMD_UPDATE_IMA;
-
-			switch(usb_cmd_code)
+			if(flag_test_write == 0)
 			{
-				case USB_CMD_READ_LOG:
-					break;
+				// check aewin_file.txt
+				//MSC_File_Operations();
+				usb_cmd_code = USB_CMD_UPDATE_IMA;
 
-				case USB_CMD_UPDATE_IMA:
-					// enable FPGA SPI
-					fpga_spi_switch = FPGA_SPI_SWITCH_ON;
-					i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
+				switch(usb_cmd_code)
+				{
+					case USB_CMD_READ_LOG:
+						aewin_dbg("Get command: Read log from FPGA.\r\n");
+						//HAL_SRAM_Read_8b(&hsram1, uint32_t *pAddress, uint8_t *pSrcBuffer, uint32_t BufferSize);
+						break;
 
-					// select 4 flash in turn
-					for(loop_index = 0; loop_index < FLASH_NUM; loop_index++)
-					{
-						fpga_spi_mode = loop_index + 1;
+					case USB_CMD_UPDATE_IMA:
+						aewin_dbg("Get command: Update flash.\r\n");
+
+						// enable FPGA SPI
+						fpga_spi_switch = FPGA_SPI_SWITCH_ON;
+						i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
+						aewin_dbg("Enable FPGA SPI.\r\n");
+
+						// select 4 flash in turn
+						for(loop_index = 0; loop_index < FLASH_NUM; loop_index++)
+						{
+							fpga_spi_mode = loop_index + 1;
+							i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
+
+							HAL_Delay(1000);
+						}
+
+						// select first flash
+						fpga_spi_mode = 0x01;
 						i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
+						aewin_dbg("Select flash %d for update.\r\n", fpga_spi_mode);
 
-						HAL_Delay(1000);
-					}
-
-					// select first flash
-					fpga_spi_mode = 0x01;
-					i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
-
-					if(flag_test_write == 0)
-					{
+						USB_MSC_File_Operations(USB_CMD_UPDATE_IMA);
 						flag_test_write = 1;
-						MSC_File_Operations();
-					}
+						//MSC_File_Operations();
+						break;
 
-					break;
+					//--------------
+					// below are test command
+					//--------------
 
-				default:
-					break;
+					case USB_CMD_ERASE_FLASH:
+						break;
+
+					case USB_CMD_READ_FLASH:
+						break;
+
+					case USB_CMD_TEST_RW:
+						aewin_dbg("Get command: Test read/writ function.\r\n");
+						USB_MSC_File_Operations(USB_CMD_TEST_RW);
+						flag_test_write = 1;
+						break;
+
+					default:
+						aewin_dbg("!! This command is not exist !!.\r\n");
+						break;
+				}
+
 			}
+
 		}
 
     }

@@ -85,12 +85,17 @@
 // USB Information
 // --------------------------------
 typedef enum{
-  USB_CMD_NONE       = 0x00, /*!< Specifies the command for none. */
-  USB_CMD_READ_LOG   = 0x01, /*!< Specifies the command for read log and save to USB disk. */
-  USB_CMD_UPDATE_IMA = 0x02, /*!< Specifies the command for update flash with .ima file in USB disk. */
-  USB_CMD_1          = 0x03, /*!< Specifies the command for none. */
-  USB_CMD_2          = 0x14  /*!< Specifies the command for none. */
+  USB_CMD_NONE        = 0x00, /*!< Specifies the command for none. */
+  USB_CMD_READ_LOG    = 0x01, /*!< Specifies the command for read log and save to USB disk. */
+  USB_CMD_UPDATE_IMA  = 0x02, /*!< Specifies the command for update flash with .ima file in USB disk. */
+  USB_CMD_ERASE_FLASH = 0xE1, /*!< Specifies the command for erase flash. */
+  USB_CMD_READ_FLASH  = 0xE2, /*!< Specifies the command for read flash. */
+  USB_CMD_TEST_RW     = 0xE3  /*!< Specifies the command for function test, write and read a .txt file. */
 }eUSB_Cmds;
+
+#define IMA_FILE_SIZE          32*1024*1024  // 32MB
+#define IMA_FILENAME_LEN_LIMIT 20
+#define IMA_FILE_PATH_HEAD_LEN 2             // 0:
 
 // --------------------------------
 // I2C Information
@@ -125,7 +130,6 @@ typedef enum{
 // --------------------------------
 // SPI Information
 // --------------------------------
-#define IMA_FILE_SIZE         32*1024*1024  // 32MB
 #define SPI_READ_BUFFER_SIZE  256           // advice 256byte, test 1024 byte
 #define SPI_WRITE_BUFFER_SIZE 256           // advice 256byte, test 2048 byte
 #define SPI_READ_LOOP_LIMIT   IMA_FILE_SIZE/SPI_READ_BUFFER_SIZE
@@ -144,7 +148,7 @@ typedef enum{
 #define FLASH_CMD_PAGE_PROGRAM       0x12
 
 
-/** @defgroup Timer_Flag_Enumeration_definition Timer Flags definitio
+/** @defgroup Timer_Flag_Enumeration_definition Timer Flags definition
   * @brief  Timer Flags definition
   * @{
   */
@@ -163,13 +167,15 @@ typedef enum{
 #define AEWIN_DBUG			(1)
 #define PRINT_BUFF			(128)
 
-
+void USB_MSC_File_Operations(unsigned char command_type);
 void MSC_File_Operations(void);
 void flash_check_status_reg(char target_value);
 void flash_write_enable(void);
 void flash_bulk_erase(void);
 void flash_clear_flag_status_reg(void);
 void flash_write_status_reg(char write_value);
+void flash_unlock(void);
+void flash_erase(void);
 
 void aewin_dbg(char *fmt,...);
 void i2c2_fpga_write(char base_addr, char data_len, char *pData);
