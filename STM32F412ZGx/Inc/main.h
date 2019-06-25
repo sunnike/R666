@@ -85,16 +85,36 @@
 // USB Information
 // --------------------------------
 typedef enum{
-  USB_CMD_NONE        = 0x00, /*!< Specifies the command for none. */
-  USB_CMD_READ_LOG    = 0x01, /*!< Specifies the command for read log and save to USB disk. */
-  USB_CMD_UPDATE_IMA  = 0x02, /*!< Specifies the command for update flash with .ima file in USB disk. */
-  USB_CMD_ERASE_FLASH = 0xE1, /*!< Specifies the command for erase flash. */
-  USB_CMD_READ_FLASH  = 0xE2, /*!< Specifies the command for read flash. */
-  USB_CMD_TEST_RW     = 0xE3  /*!< Specifies the command for function test, write and read a .txt file. */
+  USB_CMD_NONE         = 0x00, /*!< Specifies the command for none. */
+  USB_CMD_READ_LOG     = 0x01, /*!< Specifies the command for read log and save to USB disk. */
+  USB_CMD_UPDATE_IMA   = 0x02, /*!< Specifies the command for update flash with .ima file in USB disk. */
+  USB_EXE_READ_CMD,            /*!< Specifies the operation for read user command. */
+  USB_EXE_ERROR_REPORT,        /*!< Specifies the operation for generate a error report. */
+  USB_CMD_ERASE_FLASH  = 0xE1, /*!< Specifies the command for erase flash. */
+  USB_CMD_READ_FLASH   = 0xE2, /*!< Specifies the command for read flash. */
+  USB_CMD_TEST_RW      = 0xE3  /*!< Specifies the command for function test, write and read a .txt file. */
 }eUSB_Cmds;
 
+// --------------------------------
+// Error Code
+// --------------------------------
+typedef enum{
+  USB_ERR_NONE           = 0x00, /*!< No error happened. */
+  USB_ERR_FILE_RW_FAILED = 0x01, /*!< Read/Write/Open file failed. */
+  USB_ERR_FILE_WRONG_FORMAT,     /*!< aewin_file.txt is in wrong format. */
+  USB_ERR_CMD_NOT_EXIST,         /*!< User command is not exist. */
+  USB_FPGA_RW_FAILED,            /*!< Read/write FPGA failed. */
+  USB_ERR_IMA_NOT_EXIST,         /*!< .ima file is not in the USB disk. */
+  USB_ERR_FLASH_NOT_EXIST,       /*!< Specifies flash number is not exist. */
+  USB_ERR_FLASH_UPDATE_FAILED,   /*!< Flash update failed. */
+  USB_ERR_LOG_RW_FAILED          /*!< Read/Write log failed. */
+}eUSB_ErrorCodes;
+
+// --------------------------------
+// UIMA File Information
+// --------------------------------
 #define IMA_FILE_SIZE          32*1024*1024  // 32MB
-#define IMA_FILENAME_LEN_LIMIT 20
+#define IMA_FILENAME_LEN_LIMIT 25
 #define IMA_FILE_PATH_HEAD_LEN 2             // 0:
 
 // --------------------------------
@@ -117,8 +137,12 @@ typedef enum{
 #define FPGA_SPI_MODE_ADDR         0x11
 #define FPGA_BUSY_STATUS_BASE_ADDR 0x14
 
+#define FPGA_DEFULT_RETURN_VALUE   0x0A     // if FPGA unlock failed, all command will get the same return value
+
 #define FPGA_SPI_SWITCH_ON   0x01
 #define FPGA_SPI_SWITCH_OFF  0x00
+
+#define FPGA_FSMC_ADDR       0x00000
 
 // --------------------------------
 // FLASH Information
@@ -155,8 +179,8 @@ typedef enum{
 typedef enum{
   flag_idle   = 0x01, /*!< Specifies the timer "idle" states. This bit-masking is used to set/clear time_states when timer is idle. */
   flag_1ms    = 0x02, /*!< Specifies the timer "1ms" states. This bit-masking is used to set/clear time_states in every 1ms. */
-  flag_10ms   = 0x04, /*!< Specifies the timer "10ms" states. This bit-masking is used to set/clear time_states in every 10ms. */
-  flag_100ms  = 0x08, /*!< Specifies the timer "100ms" states. This bit-masking is used to set/clear time_states in every 100ms. */
+  flag_100ms  = 0x04, /*!< Specifies the timer "10ms" states. This bit-masking is used to set/clear time_states in every 100ms. */
+  flag_500ms  = 0x08, /*!< Specifies the timer "100ms" states. This bit-masking is used to set/clear time_states in every 500ms. */
   flag_1s     = 0x10  /*!< Specifies the timer "1s" states. This bit-masking is used to set/clear time_states in every 1s. */
 }eTimer_Flags;
 

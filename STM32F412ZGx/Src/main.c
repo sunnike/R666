@@ -73,20 +73,29 @@
 /* Private variables ---------------------------------------------------------*/
 extern ApplicationTypeDef Appli_state;
 
-uint8_t flag_test_write = 0;
+// test variables
+//uint8_t flag_test_write = 0;
+//uint8_t fpga_key_write_buffer[2];
+//uint8_t fpga_key_read_buffer[1];
 
+// FPGA variables
 uint8_t fpga_key[FPGA_KEY_SIZE] = {'A','E','W','I','N','1','6','8'};
 uint8_t fpga_spi_switch = FPGA_SPI_SWITCH_OFF;
 uint8_t fpga_spi_mode = FLASH_SELECT_NONE;
-//uint8_t fpga_key_write_buffer[2];
-//uint8_t fpga_key_read_buffer[1];
 uint8_t fpga_key_readback[FPGA_KEY_SIZE];
 uint8_t fpga_info[FPGA_INFO_SIZE];
 uint8_t fpga_busy_status[FPGA_BUSY_STATUS_SIZE];
+uint16_t fpga_fsmc_rxbuffer[5];
 
+// USB variables
+uint8_t usb_read_flag = 0;
 uint8_t usb_cmd_code = USB_CMD_NONE;
+uint8_t usb_err_code = USB_ERR_NONE;
 
-// extern
+uint8_t usb_cmd_flash_num = 0;
+uint8_t usb_cmd_ima_filename[IMA_FILENAME_LEN_LIMIT];
+
+// time variables
 extern volatile unsigned char time_states;
 
 
@@ -211,6 +220,22 @@ int main(void)
 			// Read FPGA Busy byte and status1 byte
 			i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
 		}
+
+	}
+
+	/*================== 500ms Routine ================== */
+	if (time_states & flag_500ms){
+		time_states &= ~flag_500ms; // Clear flag.
+
+
+	}
+
+	/*================== 500ms Routine ================== */
+	if (time_states & flag_100ms){
+		time_states &= ~flag_100ms; // Clear flag.
+
+		// [debug]
+		HAL_GPIO_TogglePin(FM_MCU_HBLED_GPIO_Port, FM_MCU_HBLED_Pin);
 	}
     //-----------------------------------
 
@@ -271,51 +296,64 @@ int main(void)
     */
 
 
-
-    if(Appli_state == APPLICATION_READY)
+	// Check USB status only if aewin_file.txt in USB disk haven't been read
+    if(usb_read_flag == 0)
     {
-
-    	// check if FPGA is not busy
-    	// verify fpga_busy_status value
-		if( (fpga_busy_status[0] == 0) && (fpga_busy_status[1] == 0) )
+    	if(Appli_state == APPLICATION_READY)
 		{
-			if(flag_test_write == 0)
+			// check if FPGA is not busy
+			// verify fpga_busy_status value
+			if( (fpga_busy_status[0] == 0) && (fpga_busy_status[1] == 0) )
 			{
-				// check aewin_file.txt
-				//MSC_File_Operations();
-				usb_cmd_code = USB_CMD_UPDATE_IMA;
+
+				// read aewin_file.txt to check user command code
+				USB_MSC_File_Operations(USB_EXE_READ_CMD);
+				//usb_cmd_code = USB_CMD_UPDATE_IMA;
+				fpga_spi_mode = usb_cmd_flash_num;
+				//read .ima file name
 
 				switch(usb_cmd_code)
 				{
 					case USB_CMD_READ_LOG:
 						aewin_dbg("Get command: Read log from FPGA.\r\n");
-						//HAL_SRAM_Read_8b(&hsram1, uint32_t *pAddress, uint8_t *pSrcBuffer, uint32_t BufferSize);
+						HAL_SRAM_Read_16b(&hsram1, FPGA_FSMC_ADDR, (uint16_t*)fpga_fsmc_rxbuffer, 5);
 						break;
 
 					case USB_CMD_UPDATE_IMA:
 						aewin_dbg("Get command: Update flash.\r\n");
+						aewin_dbg("ima file name: %s.\r\n", usb_cmd_ima_filename);
+
+						// check flash number
+						if(fpga_spi_mode > FLASH_NUM)
+						{
+							// flash number is out of range, stopping execute user command
+							usb_read_flag = 1;
+
+							aewin_dbg("Flash number %d is out of range, please try number 1~4.\r\n", fpga_spi_mode);
+							usb_err_code = USB_ERR_FLASH_NOT_EXIST;
+							break;
+						}
 
 						// enable FPGA SPI
 						fpga_spi_switch = FPGA_SPI_SWITCH_ON;
 						i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
 						aewin_dbg("Enable FPGA SPI.\r\n");
 
+						// [debug]
 						// select 4 flash in turn
-						for(loop_index = 0; loop_index < FLASH_NUM; loop_index++)
+						for(loop_index = 1; loop_index <= FLASH_NUM; loop_index++)
 						{
-							fpga_spi_mode = loop_index + 1;
-							i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
+							i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(loop_index));
 
 							HAL_Delay(1000);
 						}
 
 						// select first flash
-						fpga_spi_mode = 0x01;
 						i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
 						aewin_dbg("Select flash %d for update.\r\n", fpga_spi_mode);
 
 						USB_MSC_File_Operations(USB_CMD_UPDATE_IMA);
-						flag_test_write = 1;
+						usb_read_flag = 1;
 						//MSC_File_Operations();
 						break;
 
@@ -332,7 +370,7 @@ int main(void)
 					case USB_CMD_TEST_RW:
 						aewin_dbg("Get command: Test read/writ function.\r\n");
 						USB_MSC_File_Operations(USB_CMD_TEST_RW);
-						flag_test_write = 1;
+						usb_read_flag = 1;
 						break;
 
 					default:
@@ -342,9 +380,16 @@ int main(void)
 
 			}
 
-		}
+			// output error code
+			if(usb_err_code != USB_ERR_NONE)
+			{
+				USB_MSC_File_Operations(USB_EXE_ERROR_REPORT);
+			}
 
+		}
     }
+
+
 
 
   }
@@ -451,7 +496,8 @@ void i2c2_fpga_write(char base_addr, char data_len, char *pData)
 		write_buffer[1] = pData[local_index];
 		if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)write_buffer, 2, 10000) != HAL_OK)
 		{
-			flag_test_write = 0xE1;
+			usb_err_code = USB_FPGA_RW_FAILED;
+			return;
 		}
 	}
 }
@@ -467,12 +513,14 @@ void i2c2_fpga_read(char base_addr, char data_len, char *pData)
 		fpga_read_addr = base_addr + local_index;
 		if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, &(fpga_read_addr), 1, 10000) != HAL_OK)
 		{
-			flag_test_write = 0xE2;
+			usb_err_code = USB_FPGA_RW_FAILED;
+			return;
 		}
 
 		if(HAL_I2C_Master_Receive(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, &(read_buffer), 1, 10000) != HAL_OK)
 		{
-			flag_test_write = 0xE3;
+			usb_err_code = USB_FPGA_RW_FAILED;
+			return;
 		}
 		pData[local_index] = read_buffer;
 	}

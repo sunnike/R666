@@ -61,7 +61,9 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 unsigned char debug_mount = 0;
-extern uint8_t flag_test_write;
+
+//[debug]
+//extern uint8_t flag_test_write;
 /* USER CODE END PV */
 
 /* USER CODE BEGIN PFP */
@@ -145,7 +147,8 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 	  //LCD_ErrLog("ERROR : Cannot UnLink USB FatFS Driver! \n");
 	}
 
-	flag_test_write = 0;
+	// [debug]
+	//flag_test_write = 0;
 	break;
 
   case HOST_USER_CLASS_ACTIVE:

@@ -61,6 +61,12 @@ uint8_t wtext[] = "USB Host Library : Mass Storage Example";
 FRESULT res_write, res_read;
 FIL WriteFile, ReadFile;
 
+uint8_t usb_wtext_error_msg[] = "error code:";
+uint8_t usb_rtext_file_cmd[] = "command:";
+uint8_t usb_rtext_file_flash_num[] = "flash_number:";
+uint8_t usb_rtext_file_ima_name[] = "ima_file";
+uint8_t usb_rtext_buffer[sizeof(usb_rtext_file_ima_name)+IMA_FILENAME_LEN_LIMIT];
+
 uint32_t loop_index;
 uint8_t blank_counter;
 
@@ -74,17 +80,27 @@ uint8_t flash_cmd_read_status[] = {FLASH_CMD_READ_STATUS};
 uint8_t flash_cmd_write_enable[] = {FLASH_CMD_WRITE_ENABLE};
 uint8_t flash_cmd_clear_flag[] = {FLASH_CMD_CLEAR_FLAG};
 uint8_t flash_cmd_bulk_erase[] = {FLASH_CMD_BULK_ERASE};
-uint8_t flash_cmd_read_device_id [] = {0x9F};
 
 volatile uint8_t flash_data_read[SPI_READ_BUFFER_SIZE];
 volatile uint8_t flash_data_read_byte[1];
 
 uint32_t flash_program_address = 0;
+
+//---------------
+// USB variables
+//---------------
 uint8_t usb_file_name[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:USBHost_RWtest.txt";
+uint8_t usb_aewin_file_name[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:aewin_file.txt";
+
+uint8_t usb_ima_file_path[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:";
+
+extern uint8_t usb_err_code;
+extern uint8_t usb_cmd_code;
+extern uint8_t usb_cmd_flash_num;
+extern uint8_t usb_cmd_ima_filename[IMA_FILENAME_LEN_LIMIT];
 
 //debug
 uint8_t flag_RWfailed = 0;
-uint8_t flag_debug_spi = 0;
 uint8_t flash_test_data[SPI_READ_BUFFER_SIZE];
 
 /* Private macro -------------------------------------------------------------*/
@@ -175,26 +191,6 @@ void MSC_File_Operations(void)
 
 	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
-	//----------------------------------------------------------------
-
-
-	// read device ID
-	/*
-	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-
-	if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read_device_id, sizeof(flash_cmd_read_device_id), 5000) == HAL_OK)
-	{
-		for(loop_index = 0; loop_index < 1; loop_index++)
-		{
-			if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, 2, 5000) != HAL_OK)
-			{
-				break;
-			}
-		}
-	}
-
-	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
-	*/
 	//----------------------------------------------------------------
 
 	//================================================================
@@ -474,30 +470,6 @@ void MSC_File_Operations(void)
 #endif
 
 
-					switch(HAL_SPI_Transmit(&hspi1, (uint8_t*)rtext, sizeof(rtext), 5000))
-					{
-						case HAL_OK:
-					      /* Communication is completed ___________________________________________ */
-							flag_debug_spi = 0;
-					      break;
-
-					    case HAL_TIMEOUT:
-					      /* A Timeout Occur ______________________________________________________*/
-					      /* Call Timeout Handler */
-					    	flag_debug_spi = 3;
-					      break;
-
-					      /* An Error Occur ______________________________________________________ */
-					    case HAL_ERROR:
-					      /* Call Timeout Handler */
-					    	flag_debug_spi = 1;
-					      break;
-
-					    default:
-					    	flag_debug_spi = 9;
-					      break;
-					}
-
 					memset(rtext, '\0', sizeof(rtext));
 
 				}
@@ -583,9 +555,9 @@ void USB_MSC_File_Operations(unsigned char command_type)
 
 			// read .ima file from USB disk
 			aewin_dbg("Start programming flash.\r\n");
-			if(f_open(&ReadFile, "0:1911-R4-3.2.3-5D2F.ima", FA_READ) != FR_OK)
+			if(f_open(&ReadFile, usb_ima_file_path, FA_READ) != FR_OK)
 			{
-				flag_RWfailed = 1;
+				usb_err_code = USB_ERR_FILE_RW_FAILED;
 			}
 			else
 			{
@@ -595,7 +567,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					res_read = f_read(&ReadFile, rtext, sizeof(rtext), (void *)&bytesread);
 					if((bytesread == 0) || (res_read != FR_OK)) /*EOF or Error*/
 					{
-						flag_RWfailed = 1;
+						usb_err_code = USB_ERR_FILE_RW_FAILED;
 					}
 					else
 					{
@@ -659,8 +631,86 @@ void USB_MSC_File_Operations(unsigned char command_type)
 
 			HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
-
 			break;
+
+		case USB_EXE_READ_CMD:
+			if(f_open(&MyFile, usb_aewin_file_name, FA_READ) != FR_OK)
+			{
+				usb_err_code = USB_ERR_FILE_RW_FAILED;
+			}
+			else
+			{
+				// check command
+				f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer), &MyFile);
+				usb_cmd_code = usb_rtext_buffer[sizeof(usb_rtext_file_cmd)-1] - '0';
+				for(loop_index = 0; loop_index < (sizeof(usb_rtext_file_cmd)-1) ; loop_index++)
+				{
+					if(usb_rtext_buffer[loop_index] != usb_rtext_file_cmd[loop_index])
+					{
+						usb_cmd_code = USB_CMD_NONE;
+						break;
+					}
+				}
+
+				// check flash number
+				f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer), &MyFile);
+				usb_cmd_flash_num = usb_rtext_buffer[sizeof(usb_rtext_file_flash_num)-1] - '0';
+				for(loop_index = 0; loop_index < (sizeof(usb_rtext_file_flash_num)-1) ; loop_index++)
+				{
+					if(usb_rtext_buffer[loop_index] != usb_rtext_file_flash_num[loop_index])
+					{
+						usb_cmd_flash_num = USB_CMD_NONE;
+						break;
+					}
+				}
+
+				// check ima file name
+				f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer),&MyFile);
+
+				for(loop_index = 0; loop_index < sizeof(usb_rtext_file_ima_name)-1 ; loop_index++)
+				{
+					if(usb_rtext_buffer[loop_index] != usb_rtext_file_ima_name[loop_index])
+					{
+						usb_cmd_code = USB_CMD_NONE;
+						break;
+					}
+				}
+
+				for(loop_index = 0; loop_index < IMA_FILENAME_LEN_LIMIT; loop_index++)
+				{
+					if(usb_rtext_buffer[ sizeof(usb_rtext_file_ima_name) + loop_index] == '\n')
+					{
+						break;
+					}
+					else
+					{
+						usb_cmd_ima_filename[loop_index] = usb_rtext_buffer[ sizeof(usb_rtext_file_ima_name) + loop_index];
+					}
+				}
+
+				strcat(usb_ima_file_path, usb_cmd_ima_filename);
+
+				f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer),&MyFile);
+				f_close(&MyFile);
+			}
+			break;
+
+		case USB_EXE_ERROR_REPORT:
+			if(f_open(&WriteFile, "0:error_report.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+			{
+				usb_err_code = USB_ERR_FILE_RW_FAILED;
+			}
+			else
+			{
+				//usb_wtext_error_msg[sizeof("error code:")] = usb_err_code;
+				res= f_write (&WriteFile, usb_wtext_error_msg, sizeof(usb_wtext_error_msg), (void *)&bytesWritten);
+				res= f_write (&WriteFile, &usb_err_code, 1, (void *)&bytesWritten);
+				//res= f_write (&WriteFile, "\r\n", sizeof("\r\n"), (void *)&bytesWritten);
+				f_close(&WriteFile);
+			}
+			break;
+
+		//------below are debug/test command-------
 
 		case USB_CMD_READ_FLASH:
 			HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
@@ -739,21 +789,21 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			// try to read .txt file
 			if(f_open(&ReadFile, usb_file_name, FA_READ) != FR_OK)
 			{
-				flag_RWfailed = 1;
+				usb_err_code = USB_ERR_FILE_RW_FAILED;
 			}
 			else
 			{
 				// open a new file to store read file
 				if(f_open(&WriteFile, "0:read_test_output.ima",FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 				{
-					flag_RWfailed = 1;
+					usb_err_code = USB_ERR_FILE_RW_FAILED;
 				}
 				else
 				{
 					res_read = f_read(&ReadFile, rtext, sizeof(rtext), (void *)&bytesread);
 					if((bytesread == 0) || (res_read != FR_OK)) /*EOF or Error*/
 					{
-						flag_RWfailed = 1;
+						usb_err_code = USB_ERR_FILE_RW_FAILED;
 					}
 					else
 					{

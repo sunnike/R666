@@ -214,10 +214,22 @@ void TIM1_UP_TIM10_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
+	static unsigned int timer_cnt = 0;
 
-	time_states |= flag_1s;
-	// [debug]
-	HAL_GPIO_TogglePin(FM_MCU_HBLED_GPIO_Port, FM_MCU_HBLED_Pin);
+	time_states |= flag_100ms;
+
+	if ((++timer_cnt) >= 10){
+		/* Set 1s time flag. */
+		time_states |= flag_1s;
+		/* Clear timer count. */
+		timer_cnt = 0;
+	}
+
+	if(!(timer_cnt % 5)){
+		/* Set 500ms time flag. */
+		time_states |= flag_500ms;
+	}
+
   /* USER CODE END TIM3_IRQn 0 */
   HAL_TIM_IRQHandler(&htim3);
   /* USER CODE BEGIN TIM3_IRQn 1 */
