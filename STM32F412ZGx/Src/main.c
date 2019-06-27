@@ -179,8 +179,8 @@ int main(void)
 
   // Read FPGA information - version and time
   i2c2_fpga_read(FPGA_INFO_BASE_ADDR, FPGA_INFO_SIZE, (uint8_t*)fpga_info);
-  aewin_dbg("FPGA version: 20%d.%d.%d\r\n", fpga_info[0], fpga_info[1], fpga_info[2]);
-  aewin_dbg("FPGA build date: %d %d %d\r\n", fpga_info[5], fpga_info[4], fpga_info[3]);
+  aewin_dbg("FPGA version: %d.%d.%d\r\n", fpga_info[0], fpga_info[1], fpga_info[2]);
+  aewin_dbg("FPGA build date: 20%d %d %d\r\n", fpga_info[5], fpga_info[4], fpga_info[3]);
 
   // Read FPGA Busy byte and status1 byte
   i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
@@ -308,7 +308,7 @@ int main(void)
 
 				// read aewin_file.txt to check user command code
 				USB_MSC_File_Operations(USB_EXE_READ_CMD);
-				//usb_cmd_code = USB_CMD_UPDATE_IMA;
+				usb_cmd_code = USB_CMD_READ_LOG;
 				fpga_spi_mode = usb_cmd_flash_num;
 				//read .ima file name
 
@@ -316,7 +316,10 @@ int main(void)
 				{
 					case USB_CMD_READ_LOG:
 						aewin_dbg("Get command: Read log from FPGA.\r\n");
-						HAL_SRAM_Read_16b(&hsram1, FPGA_FSMC_ADDR, (uint16_t*)fpga_fsmc_rxbuffer, 5);
+						USB_MSC_File_Operations(USB_CMD_READ_LOG);
+						usb_read_flag = 1;
+
+						//HAL_SRAM_Read_16b(&hsram1, FPGA_FSMC_ADDR, (uint16_t*)fpga_fsmc_rxbuffer, 5);
 						break;
 
 					case USB_CMD_UPDATE_IMA:
@@ -365,6 +368,9 @@ int main(void)
 						break;
 
 					case USB_CMD_READ_FLASH:
+						aewin_dbg("Get command: Read flash data.\r\n");
+						USB_MSC_File_Operations(USB_CMD_READ_FLASH);
+						usb_read_flag = 1;
 						break;
 
 					case USB_CMD_TEST_RW:

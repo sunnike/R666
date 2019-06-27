@@ -142,7 +142,7 @@ typedef enum{
 #define FPGA_SPI_SWITCH_ON   0x01
 #define FPGA_SPI_SWITCH_OFF  0x00
 
-#define FPGA_FSMC_ADDR       0x00000
+#define FPGA_FSMC_ADDR       0x60000000
 
 // --------------------------------
 // FLASH Information

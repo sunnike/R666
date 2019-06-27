@@ -99,6 +99,15 @@ extern uint8_t usb_cmd_code;
 extern uint8_t usb_cmd_flash_num;
 extern uint8_t usb_cmd_ima_filename[IMA_FILENAME_LEN_LIMIT];
 
+//---------------
+// FPGA variables
+//---------------
+uint32_t *fpga_log_addr;
+uint16_t fpga_log_16bit;
+uint8_t fpga_log_str[14];
+
+uint8_t general_byte_str[5];
+
 //debug
 uint8_t flag_RWfailed = 0;
 uint8_t flash_test_data[SPI_READ_BUFFER_SIZE];
@@ -529,6 +538,41 @@ void USB_MSC_File_Operations(unsigned char command_type)
 	switch(command_type)
 	{
 		case USB_CMD_READ_LOG:
+			fpga_log_addr = (uint32_t *)FPGA_FSMC_ADDR;
+			aewin_dbg(" State Minute   Hour    Day  Month   Year    BMC   BIOS\r\n");
+			for(loop_index = 0; loop_index < 128; loop_index++)
+			{
+				fpga_log_16bit = *fpga_log_addr;
+				aewin_dbg("  0x%02x   0x%02x ", (fpga_log_16bit&0xFF), ((fpga_log_16bit & 0xFF00)>>8));
+				if(loop_index % 4 == 3)
+				{
+					aewin_dbg("\r\n");
+				}
+				fpga_log_addr++;
+			}
+
+			if(f_open(&WriteFile, "0:log_report.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+			{
+				usb_err_code = USB_ERR_FILE_RW_FAILED;
+			}
+			else
+			{
+				res= f_write (&WriteFile, " State Minute   Hour    Day  Month   Year    BMC   BIOS\r\n", sizeof(" State Minute   Hour    Day  Month   Year    BMC   BIOS\r\n")-1, (void *)&bytesWritten);
+
+				fpga_log_addr = (uint32_t *)FPGA_FSMC_ADDR;
+				for(loop_index = 0; loop_index < 128; loop_index++)
+				{
+					fpga_log_16bit = *fpga_log_addr;
+					sprintf(fpga_log_str,"  0x%02x   0x%02x ",(fpga_log_16bit&0xFF), ((fpga_log_16bit & 0xFF00)>>8));
+					res= f_write (&WriteFile, fpga_log_str, sizeof(fpga_log_str), (void *)&bytesWritten);
+					if(loop_index % 4 == 3)
+					{
+						res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
+					}
+					fpga_log_addr++;
+				}
+				f_close(&WriteFile);
+			}
 
 			break;
 
@@ -713,21 +757,50 @@ void USB_MSC_File_Operations(unsigned char command_type)
 		//------below are debug/test command-------
 
 		case USB_CMD_READ_FLASH:
-			HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-
-			if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
+			if(f_open(&WriteFile, "0:error_report.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
-				//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
-				for(loop_index = 0; loop_index < 5; loop_index++) //test
+				usb_err_code = USB_ERR_FILE_RW_FAILED;
+			}
+			else
+			{
+				aewin_dbg("Start reading flash data.\r\n");
+				HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+
+				if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
 				{
-					if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
+					for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
 					{
-						break;
+						if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
+						{
+							break;
+						}
+
+						// write flash data to a .txt file
+						res= f_write (&WriteFile, "\r\nPage", sizeof("\r\nPage"), (void *)&bytesWritten);
+						res= f_write (&WriteFile, &loop_index, 1, (void *)&bytesWritten);
+						for(page_data_index = 0; page_data_index < sizeof(flash_data_read); page_data_index++)
+						{
+							if(page_data_index % 16 == 0)
+							{
+								res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
+							}
+							sprintf(general_byte_str,"0x%02x ",flash_data_read[page_data_index]);
+							res= f_write (&WriteFile, fpga_log_str, sizeof(general_byte_str), (void *)&bytesWritten);
+
+						}
 					}
 				}
+
+				HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+
+				f_close(&WriteFile);
+				aewin_dbg("Reading flash data finished.\r\n");
 			}
 
-			HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+
+
+			// read flash 5 pages
+
 			break;
 
 		case USB_CMD_TEST_RW:
