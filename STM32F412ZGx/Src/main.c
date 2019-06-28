@@ -98,6 +98,9 @@ uint8_t usb_cmd_ima_filename[IMA_FILENAME_LEN_LIMIT];
 // time variables
 extern volatile unsigned char time_states;
 
+RTC_TimeTypeDef RTC_Time;
+RTC_DateTypeDef RTC_Date;
+
 
 #if AEWIN_DBUG
 char dbg_buff[PRINT_BUFF];
@@ -220,6 +223,13 @@ int main(void)
 			// Read FPGA Busy byte and status1 byte
 			i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
 		}
+
+		HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
+		HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
+
+		 aewin_dbg("RTC Date: 20%02x.%02x.%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date);
+		 aewin_dbg("RTC Time: %02x.%02x.%02x\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+		 aewin_dbg("--------------------\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
 
 	}
 
