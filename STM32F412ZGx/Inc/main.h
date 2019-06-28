@@ -142,7 +142,35 @@ typedef enum{
 #define FPGA_SPI_SWITCH_ON   0x01
 #define FPGA_SPI_SWITCH_OFF  0x00
 
-#define FPGA_FSMC_ADDR       0x60000000
+#define FPGA_DATA_BYTE_SIZE    2    // read 16bit at 1 time
+#define FPGA_DATA_NUM          32
+#define FPGA_LOG_NUM           30
+#define FPGA_DATA_BYTE_NUM     256  // byte
+#define FPGA_DATA_SKIP_NUM     8    // first 2 data is not log
+#define FPGA_LOG_BYTE_NUM      (FPGA_DATA_BYTE_NUM - FPGA_DATA_SKIP_NUM * FPGA_DATA_BYTE_SIZE)
+
+typedef enum{
+  FPGA_LOG_BIOS    = 0, /*!< BIOS Number in FPGA log*/
+  FPGA_LOG_BMC     = 1, /*!< BMC Number in FPGA log*/
+  FPGA_LOG_YEAR,        /*!< Year Number in FPGA log*/
+  FPGA_LOG_MONTH,       /*!< Month Number in FPGA log*/
+  FPGA_LOG_DAY,         /*!< Day Number in FPGA log*/
+  FPGA_LOG_HOUR,        /*!< Hour Number in FPGA log*/
+  FPGA_LOG_MINUTE,      /*!< Minute Number in FPGA log*/
+  FPGA_LOG_STATE,       /*!< State Number in FPGA log*/
+  FPGA_LOG_SIZE         /*!< Size of 1 log in FPGA*/
+}eFPGA_LOG_NUMs;
+
+#define FPGA_LOG_EMPTY      0xff
+#define FPGA_LOG_STATE_DONE 0x01
+#define FPGA_LOG_OK         0x01
+#define FPGA_LOG_RE         0x02
+
+
+
+#define FPGA_FSMC_BASE_ADDR  0x60000000
+#define FPGA_FSMC_LOG_ADDR   (FPGA_FSMC_BASE_ADDR + FPGA_DATA_SKIP_NUM*4)
+
 
 // --------------------------------
 // FLASH Information

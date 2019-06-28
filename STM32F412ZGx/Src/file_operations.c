@@ -105,8 +105,11 @@ extern uint8_t usb_cmd_ima_filename[IMA_FILENAME_LEN_LIMIT];
 uint32_t *fpga_log_addr;
 uint16_t fpga_log_16bit;
 uint8_t fpga_log_str[14];
+uint8_t fpga_log_num;
+uint8_t fpga_log[FPGA_LOG_SIZE];
+uint8_t fpga_log_index;
 
-uint8_t general_byte_str[5];
+//uint8_t general_byte_str[5];
 
 //debug
 uint8_t flag_RWfailed = 0;
@@ -538,36 +541,165 @@ void USB_MSC_File_Operations(unsigned char command_type)
 	switch(command_type)
 	{
 		case USB_CMD_READ_LOG:
-			fpga_log_addr = (uint32_t *)FPGA_FSMC_ADDR;
-			aewin_dbg(" State Minute   Hour    Day  Month   Year    BMC   BIOS\r\n");
+			fpga_log_addr = (uint32_t *)FPGA_FSMC_BASE_ADDR;
+			fpga_log_16bit = *fpga_log_addr;
+			aewin_dbg("Last log: %d\r\n", (fpga_log_16bit&0xFF));
+			aewin_dbg("  BIOS    BMC   Year  Month    Day   Hour Minute  State");
 			for(loop_index = 0; loop_index < 128; loop_index++)
 			{
-				fpga_log_16bit = *fpga_log_addr;
-				aewin_dbg("  0x%02x   0x%02x ", (fpga_log_16bit&0xFF), ((fpga_log_16bit & 0xFF00)>>8));
-				if(loop_index % 4 == 3)
+				if(loop_index % 4 == 0)
 				{
 					aewin_dbg("\r\n");
 				}
+
+				fpga_log_16bit = *fpga_log_addr;
+				aewin_dbg("  0x%02x   0x%02x ", (fpga_log_16bit&0xFF), ((fpga_log_16bit & 0xFF00)>>8));
+
 				fpga_log_addr++;
 			}
 
+			/*
 			if(f_open(&WriteFile, "0:log_report.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
 			}
 			else
 			{
-				res= f_write (&WriteFile, " State Minute   Hour    Day  Month   Year    BMC   BIOS\r\n", sizeof(" State Minute   Hour    Day  Month   Year    BMC   BIOS\r\n")-1, (void *)&bytesWritten);
+				fpga_log_addr = (uint32_t *)FPGA_FSMC_BASE_ADDR;
 
-				fpga_log_addr = (uint32_t *)FPGA_FSMC_ADDR;
-				for(loop_index = 0; loop_index < 128; loop_index++)
+				fpga_log_16bit = *fpga_log_addr;
+				sprintf(fpga_log_str,"%d",(fpga_log_16bit&0xFF));
+				res= f_write(&WriteFile, "Last log: ", sizeof("Last log: "), (void *)&bytesWritten);
+				res= f_write(&WriteFile, fpga_log_str, 2, (void *)&bytesWritten);
+				res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
+
+				res= f_write (&WriteFile, "No.   BIOS    BMC   Year  Month    Day   Hour Minute  State", sizeof("No.   BIOS    BMC   Year  Month    Day   Hour Minute  State"), (void *)&bytesWritten);
+
+				fpga_log_addr = (uint32_t *)FPGA_FSMC_LOG_ADDR;
+				fpga_log_num = 0;
+				for(loop_index = 0; loop_index < (FPGA_LOG_BYTE_NUM/FPGA_DATA_BYTE_SIZE); loop_index++)
 				{
+					if(loop_index % 4 == 0)
+					{
+						fpga_log_num++;
+						sprintf(fpga_log_str,"%3d ",fpga_log_num);
+						res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
+						res= f_write(&WriteFile, fpga_log_str, 4, (void *)&bytesWritten);
+					}
+
 					fpga_log_16bit = *fpga_log_addr;
 					sprintf(fpga_log_str,"  0x%02x   0x%02x ",(fpga_log_16bit&0xFF), ((fpga_log_16bit & 0xFF00)>>8));
 					res= f_write (&WriteFile, fpga_log_str, sizeof(fpga_log_str), (void *)&bytesWritten);
-					if(loop_index % 4 == 3)
+
+					fpga_log_addr++;
+				}
+				f_close(&WriteFile);
+			}
+			*/
+
+
+			if(f_open(&WriteFile, "0:log_report_format.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+			{
+				usb_err_code = USB_ERR_FILE_RW_FAILED;
+			}
+			else
+			{
+				fpga_log_addr = (uint32_t *)FPGA_FSMC_BASE_ADDR;
+
+				fpga_log_16bit = *fpga_log_addr;
+				sprintf(fpga_log_str,"%d",(fpga_log_16bit&0xFF));
+				res= f_write(&WriteFile, "Last log: ", sizeof("Last log: "), (void *)&bytesWritten);
+				res= f_write(&WriteFile, fpga_log_str, 2, (void *)&bytesWritten);
+				res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
+
+				res= f_write (&WriteFile, "No.   BIOS    BMC   Year  Month    Day   Hour Minute  State", sizeof("No.   BIOS    BMC   Year  Month    Day   Hour Minute  State"), (void *)&bytesWritten);
+
+				fpga_log_addr = (uint32_t *)FPGA_FSMC_LOG_ADDR;
+				fpga_log_num = 0;
+				for(loop_index = 0; loop_index < (FPGA_LOG_BYTE_NUM/FPGA_DATA_BYTE_SIZE); loop_index++)
+				{
+					fpga_log_16bit = *fpga_log_addr;
+					fpga_log[(loop_index % 4) * 2 + 0] = (fpga_log_16bit&0xFF);
+					fpga_log[(loop_index % 4) * 2 + 1] = ((fpga_log_16bit & 0xFF00)>>8);
+
+
+					if(loop_index % 4 == 0)
 					{
+						// print log number
+						fpga_log_num++;
+						sprintf(fpga_log_str,"%3d ",fpga_log_num);
 						res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
+						res= f_write(&WriteFile, fpga_log_str, 4, (void *)&bytesWritten);
+					}
+					else if(loop_index % 4 == 3)
+					{
+						// print log
+						for(fpga_log_index = 0; fpga_log_index < FPGA_LOG_SIZE; fpga_log_index++)
+						{
+							switch(fpga_log_index)
+							{
+								case FPGA_LOG_BIOS:
+								case FPGA_LOG_BMC:
+									if(fpga_log[fpga_log_index] == FPGA_LOG_EMPTY)
+									{
+										sprintf(fpga_log_str,"  0x%02x ", fpga_log[fpga_log_index]);
+									}
+									else if(fpga_log[fpga_log_index] == FPGA_LOG_OK)
+									{
+										sprintf(fpga_log_str,"%6s ","OK");
+									}
+									else if(fpga_log[fpga_log_index] == FPGA_LOG_RE)
+									{
+										sprintf(fpga_log_str,"%6s ","RE");
+									}
+									else
+									{
+										sprintf(fpga_log_str,"%6d ", fpga_log[fpga_log_index]);
+									}
+									break;
+
+								case FPGA_LOG_YEAR:
+									if(fpga_log[fpga_log_index] == FPGA_LOG_EMPTY)
+									{
+										sprintf(fpga_log_str,"  0x%02x ", fpga_log[fpga_log_index]);
+									}
+									else
+									{
+										sprintf(fpga_log_str,"  20%02d ", fpga_log[fpga_log_index]);
+									}
+									break;
+
+								case FPGA_LOG_MONTH:
+								case FPGA_LOG_DAY:
+								case FPGA_LOG_HOUR:
+								case FPGA_LOG_MINUTE:
+									if(fpga_log[fpga_log_index] == FPGA_LOG_EMPTY)
+									{
+										sprintf(fpga_log_str,"  0x%02x ", fpga_log[fpga_log_index]);
+									}
+									else
+									{
+										sprintf(fpga_log_str,"%6d ", fpga_log[fpga_log_index]);
+									}
+									break;
+
+								case FPGA_LOG_STATE:
+									if(fpga_log[fpga_log_index] == FPGA_LOG_EMPTY)
+									{
+										sprintf(fpga_log_str,"  0x%02x ", fpga_log[fpga_log_index]);
+									}
+									else if(fpga_log[fpga_log_index] == FPGA_LOG_STATE_DONE)
+									{
+										sprintf(fpga_log_str,"%6s ","DONE");
+									}
+									else
+									{
+										sprintf(fpga_log_str,"%6d ", fpga_log[fpga_log_index]);
+									}
+									break;
+							}
+							res= f_write (&WriteFile, fpga_log_str, 7, (void *)&bytesWritten);
+						}
 					}
 					fpga_log_addr++;
 				}
@@ -757,7 +889,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 		//------below are debug/test command-------
 
 		case USB_CMD_READ_FLASH:
-			if(f_open(&WriteFile, "0:error_report.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+			if(f_open(&WriteFile, "0:flash_data.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
 			}
@@ -768,7 +900,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 
 				if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
 				{
-					for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
+					for(loop_index = 0; loop_index < 1; loop_index++)
 					{
 						if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
 						{
@@ -776,16 +908,16 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						}
 
 						// write flash data to a .txt file
-						res= f_write (&WriteFile, "\r\nPage", sizeof("\r\nPage"), (void *)&bytesWritten);
-						res= f_write (&WriteFile, &loop_index, 1, (void *)&bytesWritten);
+						//res= f_write (&WriteFile, "\r\nPage", sizeof("\r\nPage"), (void *)&bytesWritten);
+						//res= f_write (&WriteFile, &loop_index, 1, (void *)&bytesWritten);
 						for(page_data_index = 0; page_data_index < sizeof(flash_data_read); page_data_index++)
 						{
 							if(page_data_index % 16 == 0)
 							{
 								res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
 							}
-							sprintf(general_byte_str,"0x%02x ",flash_data_read[page_data_index]);
-							res= f_write (&WriteFile, fpga_log_str, sizeof(general_byte_str), (void *)&bytesWritten);
+							//sprintf(general_byte_str,"0x%02x ",flash_data_read[page_data_index]);
+							//res= f_write (&WriteFile, general_byte_str, sizeof(general_byte_str), (void *)&bytesWritten);
 
 						}
 					}
