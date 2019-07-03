@@ -228,7 +228,7 @@ int main(void)
 		HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
 
 		 aewin_dbg("RTC Date: 20%02x.%02x.%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date);
-		 aewin_dbg("RTC Time: %02x.%02x.%02x\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+		 aewin_dbg("RTC Time: %02x:%02x:%02x\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
 		 aewin_dbg("--------------------\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
 
 	}
@@ -318,7 +318,7 @@ int main(void)
 
 				// read aewin_file.txt to check user command code
 				USB_MSC_File_Operations(USB_EXE_READ_CMD);
-				usb_cmd_code = USB_CMD_READ_LOG;
+				//usb_cmd_code = USB_CMD_READ_LOG;
 				fpga_spi_mode = usb_cmd_flash_num;
 				//read .ima file name
 
@@ -401,9 +401,15 @@ int main(void)
 			{
 				USB_MSC_File_Operations(USB_EXE_ERROR_REPORT);
 			}
-
 		}
     }
+    else if(Appli_state == APPLICATION_DISCONNECT)
+	{
+		if(usb_read_flag == 1)
+		{
+			usb_read_flag = 0;
+		}
+	}
 
 
 

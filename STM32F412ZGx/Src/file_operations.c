@@ -541,6 +541,8 @@ void USB_MSC_File_Operations(unsigned char command_type)
 	switch(command_type)
 	{
 		case USB_CMD_READ_LOG:
+
+			// print log to UART2
 			fpga_log_addr = (uint32_t *)FPGA_FSMC_BASE_ADDR;
 			fpga_log_16bit = *fpga_log_addr;
 			aewin_dbg("Last log: %d\r\n", (fpga_log_16bit&0xFF));
@@ -557,6 +559,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 
 				fpga_log_addr++;
 			}
+			aewin_dbg("\r\n");
 
 			/*
 			if(f_open(&WriteFile, "0:log_report.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
@@ -597,23 +600,25 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			}
 			*/
 
-
+			// save log to USB disk
 			if(f_open(&WriteFile, "0:log_report_format.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
 			}
 			else
 			{
+				// print last order index
 				fpga_log_addr = (uint32_t *)FPGA_FSMC_BASE_ADDR;
-
 				fpga_log_16bit = *fpga_log_addr;
 				sprintf(fpga_log_str,"%d",(fpga_log_16bit&0xFF));
 				res= f_write(&WriteFile, "Last log: ", sizeof("Last log: "), (void *)&bytesWritten);
 				res= f_write(&WriteFile, fpga_log_str, 2, (void *)&bytesWritten);
 				res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
 
+				// print table header
 				res= f_write (&WriteFile, "No.   BIOS    BMC   Year  Month    Day   Hour Minute  State", sizeof("No.   BIOS    BMC   Year  Month    Day   Hour Minute  State"), (void *)&bytesWritten);
 
+				// print log
 				fpga_log_addr = (uint32_t *)FPGA_FSMC_LOG_ADDR;
 				fpga_log_num = 0;
 				for(loop_index = 0; loop_index < (FPGA_LOG_BYTE_NUM/FPGA_DATA_BYTE_SIZE); loop_index++)
@@ -633,7 +638,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					}
 					else if(loop_index % 4 == 3)
 					{
-						// print log
+						// print log, convert hex-log to text
 						for(fpga_log_index = 0; fpga_log_index < FPGA_LOG_SIZE; fpga_log_index++)
 						{
 							switch(fpga_log_index)
@@ -710,16 +715,18 @@ void USB_MSC_File_Operations(unsigned char command_type)
 
 		case USB_CMD_UPDATE_IMA:
 
+			//--------------------------------
+			// EREASE flash
+			//--------------------------------
 			aewin_dbg("Start erasing flash.\r\n");
 			flash_unlock();
 			flash_erase();
 			aewin_dbg("Erasing flash finished.\r\n");
 
-			flash_unlock();
 			//--------------------------------
 			// WRITE flash
 			//--------------------------------
-			// WRITE ENABLE
+			flash_unlock();
 			flash_write_enable();
 
 			// point to address 0x00000000 for starting programming
@@ -747,11 +754,12 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					}
 					else
 					{
-						// program 1-page data to flash
-						// WRITE ENABLE
+						//--------------------------------
+						// PROGRAM flash
+						//--------------------------------
 						flash_write_enable();
 
-						// program flash
+						// program flash - program 1-page data to flash
 						HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
 						if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_program, sizeof(flash_cmd_program), 5000) == HAL_OK)
 						{
@@ -767,6 +775,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						}
 						HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
+						// clear receive buffer
 						memset(rtext, '\0', sizeof(rtext));
 
 						// READ STATUS REGISTER - wait 0x00
@@ -779,7 +788,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			aewin_dbg("Programming finished!.\r\n");
 
 			// [debug]
-			// read flash 5 pages
+			// read and print flash 5 pages to UART2
 			HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
 
 			if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
@@ -827,6 +836,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						break;
 					}
 				}
+				aewin_dbg("Get USB command code: %d!.\r\n", usb_cmd_code);
 
 				// check flash number
 				f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer), &MyFile);
@@ -839,34 +849,38 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						break;
 					}
 				}
+				aewin_dbg("Get USB flash number: %d!.\r\n", usb_cmd_flash_num);
 
 				// check ima file name
 				f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer),&MyFile);
-
+				usb_cmd_ima_filename[0] = 0x5A;
 				for(loop_index = 0; loop_index < sizeof(usb_rtext_file_ima_name)-1 ; loop_index++)
 				{
 					if(usb_rtext_buffer[loop_index] != usb_rtext_file_ima_name[loop_index])
 					{
-						usb_cmd_code = USB_CMD_NONE;
+						usb_cmd_ima_filename[0] = USB_CMD_NONE;
 						break;
 					}
 				}
 
-				for(loop_index = 0; loop_index < IMA_FILENAME_LEN_LIMIT; loop_index++)
+				if(usb_cmd_ima_filename[0] != USB_CMD_NONE)
 				{
-					if(usb_rtext_buffer[ sizeof(usb_rtext_file_ima_name) + loop_index] == '\n')
+					for(loop_index = 0; loop_index < IMA_FILENAME_LEN_LIMIT; loop_index++)
 					{
-						break;
+						if(usb_rtext_buffer[ sizeof(usb_rtext_file_ima_name) + loop_index] == '\n')
+						{
+							break;
+						}
+						else
+						{
+							usb_cmd_ima_filename[loop_index] = usb_rtext_buffer[ sizeof(usb_rtext_file_ima_name) + loop_index];
+						}
 					}
-					else
-					{
-						usb_cmd_ima_filename[loop_index] = usb_rtext_buffer[ sizeof(usb_rtext_file_ima_name) + loop_index];
-					}
+					strcat(usb_ima_file_path, usb_cmd_ima_filename);
+					//aewin_dbg("Get USB flash number: %s!.\r\n", usb_cmd_ima_filename);
 				}
 
-				strcat(usb_ima_file_path, usb_cmd_ima_filename);
-
-				f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer),&MyFile);
+				//f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer),&MyFile);
 				f_close(&MyFile);
 			}
 			break;
