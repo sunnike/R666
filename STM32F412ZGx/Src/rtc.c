@@ -79,7 +79,7 @@ if(HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR0) != 0x32F2){
 
     /**Initialize RTC and set the Time and Date 
     */
-  sTime.Hours = 0x0;
+  sTime.Hours = 0x13;
   sTime.Minutes = 0x0;
   sTime.Seconds = 0x0;
   sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
@@ -89,9 +89,9 @@ if(HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR0) != 0x32F2){
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  sDate.WeekDay = RTC_WEEKDAY_SATURDAY;
-  sDate.Month = RTC_MONTH_OCTOBER;
-  sDate.Date = 0x23;
+  sDate.WeekDay = RTC_WEEKDAY_THURSDAY;
+  sDate.Month = RTC_MONTH_JULY;
+  sDate.Date = 0x4;
   sDate.Year = 0x19;
 
   if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)

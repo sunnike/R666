@@ -1,0 +1,15 @@
+
+1. USB hot-plug OK.
+2. RTC function OK - count on power off state
+3. USB operation do only 1 time after plugin
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# On branch usb_rw
+# Changes to be committed:
+#	new file:   STM32F412ZGx/Inc/usb_otg.h
+#	modified:   STM32F412ZGx/Src/file_operations.c
+#	modified:   STM32F412ZGx/Src/main.c
+#	new file:   STM32F412ZGx/Src/usb_otg.c
+#

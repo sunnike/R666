@@ -52,26 +52,35 @@
 #include "spi.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+/* Private macro -------------------------------------------------------------*/
+/* Private variables ---------------------------------------------------------*/
+
+// ---------------
+// file read/write
+//----------------
 FATFS USBH_fatfs;
 FIL MyFile;
 FRESULT res;
+FIL WriteFile, ReadFile;
+FRESULT res_write, res_read;
+
+uint16_t bytesread;
 uint32_t bytesWritten;
+
 uint8_t rtext[SPI_WRITE_BUFFER_SIZE];
 uint8_t wtext[] = "USB Host Library : Mass Storage Example";
-FRESULT res_write, res_read;
-FIL WriteFile, ReadFile;
 
-uint8_t usb_wtext_error_msg[] = "error code:";
 uint8_t usb_rtext_file_cmd[] = "command:";
 uint8_t usb_rtext_file_flash_num[] = "flash_number:";
 uint8_t usb_rtext_file_ima_name[] = "ima_file";
+uint8_t usb_wtext_error_msg[] = "error code:";
+
 uint8_t usb_rtext_buffer[sizeof(usb_rtext_file_ima_name)+IMA_FILENAME_LEN_LIMIT];
 
 uint32_t loop_index;
-uint8_t blank_counter;
 
 // ---------------
-// flash commands
+// flash variables
 //----------------
 uint8_t flash_cmd_read[] = {FLASH_CMD_READ, 0x00, 0x00, 0x00, 0x00};             // fast read data: {command, ADD1, ADD2, ADD3, Dummy}
 uint8_t flash_cmd_program[] = {FLASH_CMD_PAGE_PROGRAM, 0x00, 0x00, 0x00, 0x00};
@@ -109,14 +118,19 @@ uint8_t fpga_log_num;
 uint8_t fpga_log[FPGA_LOG_SIZE];
 uint8_t fpga_log_index;
 
-//uint8_t general_byte_str[5];
+extern uint8_t fpga_info[FPGA_INFO_SIZE];;
+
+//---------------
+// RTC variables
+//---------------
+extern RTC_TimeTypeDef RTC_Time;
+extern RTC_DateTypeDef RTC_Date;
+
 
 //debug
 uint8_t flag_RWfailed = 0;
 uint8_t flash_test_data[SPI_READ_BUFFER_SIZE];
 
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -128,7 +142,7 @@ uint8_t flash_test_data[SPI_READ_BUFFER_SIZE];
 void MSC_File_Operations(void)
 {
 
-  	uint16_t bytesread;
+  	//uint16_t bytesread;
 
 	//LCD_UsrLog("INFO : FatFs Initialized \n");
 
@@ -535,16 +549,21 @@ void MSC_File_Operations(void)
   */
 void USB_MSC_File_Operations(unsigned char command_type)
 {
-	uint16_t bytesread;
 	uint16_t page_data_index;
 
 	switch(command_type)
 	{
 		case USB_CMD_READ_LOG:
 
+			// print FPGA information
+			aewin_dbg("FPGA version: %d.%d.%d\r\n", fpga_info[0], fpga_info[1], fpga_info[2]);
+			aewin_dbg("FPGA build date: 20%02d %02d %02d\r\n", fpga_info[5], fpga_info[4], fpga_info[3]);
+			aewin_dbg("---------------------------\r\n");
+
 			// print log to UART2
 			fpga_log_addr = (uint32_t *)FPGA_FSMC_BASE_ADDR;
 			fpga_log_16bit = *fpga_log_addr;
+			aewin_dbg("Record Build Time: 20%02x.%02x.%02x %02x:%02x:%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
 			aewin_dbg("Last log: %d\r\n", (fpga_log_16bit&0xFF));
 			aewin_dbg("  BIOS    BMC   Year  Month    Day   Hour Minute  State");
 			for(loop_index = 0; loop_index < 128; loop_index++)
@@ -562,6 +581,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			aewin_dbg("\r\n");
 
 			/*
+			// save original log to USB disk
 			if(f_open(&WriteFile, "0:log_report.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
@@ -601,17 +621,36 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			*/
 
 			// save log to USB disk
+			aewin_dbg("Start saving log.\r\n");
 			if(f_open(&WriteFile, "0:log_report_format.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
+				aewin_dbg("Saving log failed.\r\n");
 			}
 			else
 			{
+				// print FPGA information
+				res= f_write(&WriteFile, "FPGA version   :", sizeof("FPGA version   :"), (void *)&bytesWritten);
+				sprintf(fpga_log_str, "%2d.%2d.%2d\r\n", fpga_info[0], fpga_info[1], fpga_info[2]);
+				res= f_write(&WriteFile, fpga_log_str, 10, (void *)&bytesWritten);
+				res= f_write(&WriteFile, "FPGA build date:", sizeof("FPGA build date:"), (void *)&bytesWritten);
+				sprintf(fpga_log_str, "20%02d.%02d.%02d\r\n", fpga_info[5], fpga_info[4], fpga_info[3]);
+				res= f_write(&WriteFile, fpga_log_str, 12, (void *)&bytesWritten);
+
+				res= f_write(&WriteFile, "---------------------------\r\n", sizeof("---------------------------\r\n")-1, (void *)&bytesWritten);
+
+				// print record build time
+				res= f_write(&WriteFile, "Record Build Time:", sizeof("Record Build Time:"), (void *)&bytesWritten);
+				sprintf(fpga_log_str, "20%02x.%02x.%02x %02x:%02x:%02x", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date);
+				res= f_write(&WriteFile, fpga_log_str, 11, (void *)&bytesWritten);
+				sprintf(fpga_log_str, "%02x:%02x:%02x\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+				res= f_write(&WriteFile, fpga_log_str, 10, (void *)&bytesWritten);
+
 				// print last order index
 				fpga_log_addr = (uint32_t *)FPGA_FSMC_BASE_ADDR;
 				fpga_log_16bit = *fpga_log_addr;
 				sprintf(fpga_log_str,"%d",(fpga_log_16bit&0xFF));
-				res= f_write(&WriteFile, "Last log: ", sizeof("Last log: "), (void *)&bytesWritten);
+				res= f_write(&WriteFile, "Last log:", sizeof("Last log:"), (void *)&bytesWritten);
 				res= f_write(&WriteFile, fpga_log_str, 2, (void *)&bytesWritten);
 				res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
 
@@ -710,6 +749,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 				}
 				f_close(&WriteFile);
 			}
+			aewin_dbg("Saving log finished.\r\n");
 
 			break;
 
@@ -877,7 +917,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						}
 					}
 					strcat(usb_ima_file_path, usb_cmd_ima_filename);
-					//aewin_dbg("Get USB flash number: %s!.\r\n", usb_cmd_ima_filename);
+					//aewin_dbg("Get USB .ima file name: %s!.\r\n", usb_cmd_ima_filename);
 				}
 
 				//f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer),&MyFile);
@@ -892,10 +932,9 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			}
 			else
 			{
-				//usb_wtext_error_msg[sizeof("error code:")] = usb_err_code;
+				sprintf(fpga_log_str,"%d",usb_err_code);
 				res= f_write (&WriteFile, usb_wtext_error_msg, sizeof(usb_wtext_error_msg), (void *)&bytesWritten);
-				res= f_write (&WriteFile, &usb_err_code, 1, (void *)&bytesWritten);
-				//res= f_write (&WriteFile, "\r\n", sizeof("\r\n"), (void *)&bytesWritten);
+				res= f_write(&WriteFile, fpga_log_str, 2, (void *)&bytesWritten);
 				f_close(&WriteFile);
 			}
 			break;
@@ -1138,9 +1177,6 @@ void flash_unlock(void)
 
 void flash_erase(void)
 {
-	//--------------------------------
-	// Erase flash
-	//--------------------------------
 	// WRITE ENABLE
 	flash_write_enable();
 

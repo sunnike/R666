@@ -183,12 +183,12 @@ int main(void)
   // Read FPGA information - version and time
   i2c2_fpga_read(FPGA_INFO_BASE_ADDR, FPGA_INFO_SIZE, (uint8_t*)fpga_info);
   aewin_dbg("FPGA version: %d.%d.%d\r\n", fpga_info[0], fpga_info[1], fpga_info[2]);
-  aewin_dbg("FPGA build date: 20%d %d %d\r\n", fpga_info[5], fpga_info[4], fpga_info[3]);
+  aewin_dbg("FPGA build date: 20%02d.%02d.%02d\r\n", fpga_info[5], fpga_info[4], fpga_info[3]);
 
   // Read FPGA Busy byte and status1 byte
   i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
   aewin_dbg("FPGA busy bit: %x\r\n", fpga_busy_status[4]);
-  aewin_dbg("FPGA busy status: %x %x %x %x\r\n", fpga_busy_status[7], fpga_busy_status[6], fpga_busy_status[5]);
+  aewin_dbg("FPGA busy status: %x %x %x\r\n", fpga_busy_status[7], fpga_busy_status[6], fpga_busy_status[5]);
   //--------------------------------
 
   /*Start the TIM Base generation in interrupt mode ####################*/
@@ -197,7 +197,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-    aewin_dbg("===== Enter while loop =====\r\n", fpga_info[5], fpga_info[4], fpga_info[3]);
+    aewin_dbg("===== Enter while loop =====\r\n");
   while (1)
   {
 
@@ -207,10 +207,6 @@ int main(void)
   /* USER CODE BEGIN 3 */
     // set PG6 high
     //HAL_GPIO_WritePin(GPIOG, GPIO_PIN_6, GPIO_PIN_SET);
-
-    // [debug]
-	// LED light on
-    //HAL_GPIO_WritePin(FM_MCU_HBLED_GPIO_Port, FM_MCU_HBLED_Pin, GPIO_PIN_SET);
 
     //----------------------------------------------------------
 	/*================== 1s Routine ================== */
@@ -224,19 +220,18 @@ int main(void)
 			i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
 		}
 
+		// print RTC time
 		HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
 		HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
-
-		 aewin_dbg("RTC Date: 20%02x.%02x.%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date);
-		 aewin_dbg("RTC Time: %02x:%02x:%02x\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
-		 aewin_dbg("--------------------\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+		aewin_dbg("RTC Date: 20%02x.%02x.%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date);
+		aewin_dbg("RTC Time: %02x:%02x:%02x\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+		aewin_dbg("--------------------\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
 
 	}
 
 	/*================== 500ms Routine ================== */
 	if (time_states & flag_500ms){
 		time_states &= ~flag_500ms; // Clear flag.
-
 
 	}
 
@@ -247,89 +242,31 @@ int main(void)
 		// [debug]
 		HAL_GPIO_TogglePin(FM_MCU_HBLED_GPIO_Port, FM_MCU_HBLED_Pin);
 	}
-    //-----------------------------------
-
-    /*
-    // write key
-    for(loop_index = 0; loop_index < FPGA_KEY_SIZE; loop_index++)
-    {
-    	fpga_key_write_buffer[0] = FPGA_KEY_BASE_ADDR + loop_index;
-    	fpga_key_write_buffer[1] = fpga_key[loop_index];
-    	if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)fpga_key_write_buffer, 2, 10000) != HAL_OK)
-		{
-			flag_test_write = 0xE1;
-		}
-    }
-
-    // read key
-    for(loop_index = 0; loop_index < FPGA_KEY_SIZE; loop_index++)
-	{
-		fpga_key_write_buffer[0] = FPGA_KEY_BASE_ADDR + loop_index;
-		if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)fpga_key_write_buffer, 1, 10000) != HAL_OK)
-		{
-			flag_test_write = 0xE2;
-		}
-
-		if(HAL_I2C_Master_Receive(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)fpga_key_read_buffer, 1, 10000) != HAL_OK)
-		{
-			flag_test_write = 0xE3;
-		}
-		fpga_key_readback[loop_index] = fpga_key_read_buffer[0];
-	}
-
-    // read info
-    for(loop_index = 0; loop_index < FPGA_INFO_SIZE; loop_index++)
-	{
-		fpga_key_write_buffer[0] = FPGA_INFO_BASE_ADDR + loop_index;
-		if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)fpga_key_write_buffer, 1, 10000) != HAL_OK)
-		{
-			flag_test_write = 0xE3;
-		}
-
-		if(HAL_I2C_Master_Receive(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)fpga_key_read_buffer, 1, 10000) != HAL_OK)
-		{
-			flag_test_write = 0xE4;
-		}
-		fpga_key_readback[loop_index] = fpga_key_read_buffer[0];
-	}
-
-    // enable SPI
-    for(loop_index = 0; loop_index < FPGA_SPI_SWITCH_SIZE; loop_index++)
-	{
-		fpga_key_write_buffer[0] = FPGA_SPI_SWITCH_ADDR + loop_index;
-		fpga_key_write_buffer[1] = 0x01;
-		if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)fpga_key_write_buffer, 2, 10000) != HAL_OK)
-		{
-			flag_test_write = 0xE1;
-		}
-	}
-    */
-
+    //-----------------------------------------------------------------------------------------------
 
 	// Check USB status only if aewin_file.txt in USB disk haven't been read
     if(usb_read_flag == 0)
     {
     	if(Appli_state == APPLICATION_READY)
 		{
-			// check if FPGA is not busy
-			// verify fpga_busy_status value
+			// check if FPGA is not busy - verify fpga_busy_status value
 			if( (fpga_busy_status[0] == 0) && (fpga_busy_status[1] == 0) )
 			{
+				usb_read_flag = 1;
 
 				// read aewin_file.txt to check user command code
 				USB_MSC_File_Operations(USB_EXE_READ_CMD);
-				//usb_cmd_code = USB_CMD_READ_LOG;
 				fpga_spi_mode = usb_cmd_flash_num;
-				//read .ima file name
+
+				// [debug]
+				//usb_cmd_code = USB_CMD_READ_LOG;
 
 				switch(usb_cmd_code)
 				{
 					case USB_CMD_READ_LOG:
 						aewin_dbg("Get command: Read log from FPGA.\r\n");
 						USB_MSC_File_Operations(USB_CMD_READ_LOG);
-						usb_read_flag = 1;
 
-						//HAL_SRAM_Read_16b(&hsram1, FPGA_FSMC_ADDR, (uint16_t*)fpga_fsmc_rxbuffer, 5);
 						break;
 
 					case USB_CMD_UPDATE_IMA:
@@ -340,10 +277,9 @@ int main(void)
 						if(fpga_spi_mode > FLASH_NUM)
 						{
 							// flash number is out of range, stopping execute user command
-							usb_read_flag = 1;
-
 							aewin_dbg("Flash number %d is out of range, please try number 1~4.\r\n", fpga_spi_mode);
 							usb_err_code = USB_ERR_FLASH_NOT_EXIST;
+
 							break;
 						}
 
@@ -354,21 +290,24 @@ int main(void)
 
 						// [debug]
 						// select 4 flash in turn
+						/*
 						for(loop_index = 1; loop_index <= FLASH_NUM; loop_index++)
 						{
 							i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(loop_index));
 
 							HAL_Delay(1000);
 						}
+						*/
 
-						// select first flash
+						// select target flash
 						i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
 						aewin_dbg("Select flash %d for update.\r\n", fpga_spi_mode);
 
+						// update flash - write .ima file to flash
 						USB_MSC_File_Operations(USB_CMD_UPDATE_IMA);
-						usb_read_flag = 1;
-						//MSC_File_Operations();
+
 						break;
+
 
 					//--------------
 					// below are test command
@@ -380,20 +319,21 @@ int main(void)
 					case USB_CMD_READ_FLASH:
 						aewin_dbg("Get command: Read flash data.\r\n");
 						USB_MSC_File_Operations(USB_CMD_READ_FLASH);
-						usb_read_flag = 1;
+
 						break;
 
 					case USB_CMD_TEST_RW:
 						aewin_dbg("Get command: Test read/writ function.\r\n");
 						USB_MSC_File_Operations(USB_CMD_TEST_RW);
-						usb_read_flag = 1;
+
 						break;
 
 					default:
+						usb_err_code = USB_ERR_CMD_NOT_EXIST;
 						aewin_dbg("!! This command is not exist !!.\r\n");
+
 						break;
 				}
-
 			}
 
 			// output error code
@@ -410,9 +350,6 @@ int main(void)
 			usb_read_flag = 0;
 		}
 	}
-
-
-
 
   }
   /* USER CODE END 3 */
