@@ -90,9 +90,9 @@ typedef enum{
   USB_CMD_UPDATE_IMA   = 0x02, /*!< Specifies the command for update flash with .ima file in USB disk. */
   USB_EXE_READ_CMD,            /*!< Specifies the operation for read user command. */
   USB_EXE_ERROR_REPORT,        /*!< Specifies the operation for generate a error report. */
+  USB_CMD_READ_FLASH,          /*!< Specifies the command for read flash. */
   USB_CMD_ERASE_FLASH  = 0xE1, /*!< Specifies the command for erase flash. */
-  USB_CMD_READ_FLASH   = 0xE2, /*!< Specifies the command for read flash. */
-  USB_CMD_TEST_RW      = 0xE3  /*!< Specifies the command for function test, write and read a .txt file. */
+  USB_CMD_TEST_RW      = 0xE2  /*!< Specifies the command for function test, write and read a .txt file. */
 }eUSB_Cmds;
 
 // --------------------------------

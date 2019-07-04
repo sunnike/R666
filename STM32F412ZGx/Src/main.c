@@ -318,6 +318,27 @@ int main(void)
 
 					case USB_CMD_READ_FLASH:
 						aewin_dbg("Get command: Read flash data.\r\n");
+
+						// check flash number
+						if(fpga_spi_mode > FLASH_NUM)
+						{
+							// flash number is out of range, stopping execute user command
+							aewin_dbg("Flash number %d is out of range, please try number 1~4.\r\n", fpga_spi_mode);
+							usb_err_code = USB_ERR_FLASH_NOT_EXIST;
+
+							break;
+						}
+
+						// select target flash
+						i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
+						aewin_dbg("Select flash %d for update.\r\n", fpga_spi_mode);
+
+						// enable FPGA SPI
+						fpga_spi_switch = FPGA_SPI_SWITCH_ON;
+						i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
+						aewin_dbg("Enable FPGA SPI.\r\n");
+
+						// read flash
 						USB_MSC_File_Operations(USB_CMD_READ_FLASH);
 
 						break;

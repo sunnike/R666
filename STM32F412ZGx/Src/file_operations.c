@@ -95,6 +95,8 @@ volatile uint8_t flash_data_read_byte[1];
 
 uint32_t flash_program_address = 0;
 
+uint8_t flash_data_str[3];
+
 //---------------
 // USB variables
 //---------------
@@ -953,7 +955,9 @@ void USB_MSC_File_Operations(unsigned char command_type)
 
 				if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
 				{
-					for(loop_index = 0; loop_index < 1; loop_index++)
+					//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
+					//for(loop_index = 0; loop_index < (4*32); loop_index++)
+					for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT/8; loop_index++)
 					{
 						if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
 						{
@@ -969,9 +973,8 @@ void USB_MSC_File_Operations(unsigned char command_type)
 							{
 								res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
 							}
-							//sprintf(general_byte_str,"0x%02x ",flash_data_read[page_data_index]);
-							//res= f_write (&WriteFile, general_byte_str, sizeof(general_byte_str), (void *)&bytesWritten);
-
+							sprintf(flash_data_str,"%02x ",flash_data_read[page_data_index]);
+							res= f_write (&WriteFile, flash_data_str, sizeof(flash_data_str), (void *)&bytesWritten);
 						}
 					}
 				}
