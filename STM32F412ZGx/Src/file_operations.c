@@ -68,12 +68,12 @@ uint16_t bytesread;
 uint32_t bytesWritten;
 
 uint8_t rtext[SPI_WRITE_BUFFER_SIZE];
-uint8_t wtext[] = "USB Host Library : Mass Storage Example";
+const uint8_t wtext[] = "USB Host Library : Mass Storage Example";
 
-uint8_t usb_rtext_file_cmd[] = "command:";
-uint8_t usb_rtext_file_flash_num[] = "flash_number:";
-uint8_t usb_rtext_file_ima_name[] = "ima_file";
-uint8_t usb_wtext_error_msg[] = "error code:";
+const uint8_t usb_rtext_file_cmd[] = "command:";
+const uint8_t usb_rtext_file_flash_num[] = "flash_number:";
+const uint8_t usb_rtext_file_ima_name[] = "ima_file";
+const uint8_t usb_wtext_error_msg[] = "error code:";
 
 uint8_t usb_rtext_buffer[sizeof(usb_rtext_file_ima_name)+IMA_FILENAME_LEN_LIMIT];
 
@@ -82,13 +82,13 @@ uint32_t loop_index;
 // ---------------
 // flash variables
 //----------------
-uint8_t flash_cmd_read[] = {FLASH_CMD_READ, 0x00, 0x00, 0x00, 0x00};             // fast read data: {command, ADD1, ADD2, ADD3, Dummy}
 uint8_t flash_cmd_program[] = {FLASH_CMD_PAGE_PROGRAM, 0x00, 0x00, 0x00, 0x00};
-uint8_t flash_cmd_write_status[] = {FLASH_CMD_WRITE_STATUS, 0x00};
-uint8_t flash_cmd_read_status[] = {FLASH_CMD_READ_STATUS};
-uint8_t flash_cmd_write_enable[] = {FLASH_CMD_WRITE_ENABLE};
-uint8_t flash_cmd_clear_flag[] = {FLASH_CMD_CLEAR_FLAG};
-uint8_t flash_cmd_bulk_erase[] = {FLASH_CMD_BULK_ERASE};
+const uint8_t flash_cmd_read[] = {FLASH_CMD_READ, 0x00, 0x00, 0x00, 0x00};             // fast read data: {command, ADD1, ADD2, ADD3, Dummy}
+const uint8_t flash_cmd_write_status[] = {FLASH_CMD_WRITE_STATUS, 0x00};
+const uint8_t flash_cmd_read_status[] = {FLASH_CMD_READ_STATUS};
+const uint8_t flash_cmd_write_enable[] = {FLASH_CMD_WRITE_ENABLE};
+const uint8_t flash_cmd_clear_flag[] = {FLASH_CMD_CLEAR_FLAG};
+const uint8_t flash_cmd_bulk_erase[] = {FLASH_CMD_BULK_ERASE};
 
 volatile uint8_t flash_data_read[SPI_READ_BUFFER_SIZE];
 volatile uint8_t flash_data_read_byte[1];
@@ -100,10 +100,12 @@ uint8_t flash_data_str[3];
 //---------------
 // USB variables
 //---------------
-uint8_t usb_file_name[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:USBHost_RWtest.txt";
-uint8_t usb_aewin_file_name[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:aewin_file.txt";
+const uint8_t usb_file_name[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:USBHost_RWtest.txt";
+const uint8_t usb_aewin_file_name[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:aewin_file.txt";
 
 uint8_t usb_ima_file_path[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:";
+
+uint8_t usb_write_str[3*16+2];
 
 extern uint8_t usb_err_code;
 extern uint8_t usb_cmd_code;
@@ -969,12 +971,18 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						//res= f_write (&WriteFile, &loop_index, 1, (void *)&bytesWritten);
 						for(page_data_index = 0; page_data_index < sizeof(flash_data_read); page_data_index++)
 						{
-							if(page_data_index % 16 == 0)
-							{
-								res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
-							}
 							sprintf(flash_data_str,"%02x ",flash_data_read[page_data_index]);
-							res= f_write (&WriteFile, flash_data_str, sizeof(flash_data_str), (void *)&bytesWritten);
+							strcat(usb_write_str, flash_data_str);
+
+							if(page_data_index % 16 == 15)
+							{
+								strcat(usb_write_str, "\r\n");
+								res= f_write(&WriteFile, usb_write_str, sizeof(usb_write_str), (void *)&bytesWritten);
+								memset(usb_write_str, '\0', sizeof(usb_write_str));
+								//res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
+							}
+							//sprintf(flash_data_str,"%02x ",flash_data_read[page_data_index]);
+							//res= f_write (&WriteFile, flash_data_str, sizeof(flash_data_str), (void *)&bytesWritten);
 						}
 					}
 				}
@@ -984,10 +992,6 @@ void USB_MSC_File_Operations(unsigned char command_type)
 				f_close(&WriteFile);
 				aewin_dbg("Reading flash data finished.\r\n");
 			}
-
-
-
-			// read flash 5 pages
 
 			break;
 

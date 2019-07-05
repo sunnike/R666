@@ -79,7 +79,8 @@ extern ApplicationTypeDef Appli_state;
 //uint8_t fpga_key_read_buffer[1];
 
 // FPGA variables
-uint8_t fpga_key[FPGA_KEY_SIZE] = {'A','E','W','I','N','1','6','8'};
+const uint8_t fpga_key[FPGA_KEY_SIZE] = {'A','E','W','I','N','1','6','8'};
+
 uint8_t fpga_spi_switch = FPGA_SPI_SWITCH_OFF;
 uint8_t fpga_spi_mode = FLASH_SELECT_NONE;
 uint8_t fpga_key_readback[FPGA_KEY_SIZE];
