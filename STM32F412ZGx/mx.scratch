@@ -1,14 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Project>
-<ProjectName>D:\Git_workspace\R666\R666\STM32F412ZGx\\STM32F412ZGx_R666</ProjectName>
+<ProjectName>D:\Git_workspace\R666\R666\STM32F412ZGx\STM32F412ZGx_R666\STM32F412ZGx_R666\STM32F412ZGx_R666\STM32F412ZGx_R666\STM32F412ZGx_R666\STM32F412ZGx_R666</ProjectName>
 <ProjectNature>C</ProjectNature> 
-<CMSIS>..\Drivers\CMSIS</CMSIS>
+<CMSIS>..\..\..\..\..\..\Drivers\CMSIS</CMSIS>
 <HAL_Driver>D:\STM32 Library\STM32Cube_FW_F4_V1.21.0\Drivers\CMSIS</HAL_Driver>
 <Toolchain>SW4STM32</Toolchain>
 <Version>0</Version>
 
 <filestoremove>
     <file>
+    <name>..\..\..\..\..\Src\main.c</name>
+    <name>..\..\..\..\..\Src\gpio.c</name>
+    <name>..\..\..\..\..\Src\adc.c</name>
+    <name>..\..\..\..\..\Src\usbh_diskio.c</name>
+    <name>..\..\..\..\..\Src\fatfs.c</name>
+    <name>..\..\..\..\..\Src\fsmc.c</name>
+    <name>..\..\..\..\..\Src\i2c.c</name>
+    <name>..\..\..\..\..\Src\rtc.c</name>
+    <name>..\..\..\..\..\Src\spi.c</name>
+    <name>..\..\..\..\..\Src\tim.c</name>
+    <name>..\..\..\..\..\Src\usart.c</name>
+    <name>..\..\..\..\..\Src\usb_host.c</name>
+    <name>..\..\..\..\..\Src\usbh_conf.c</name>
+    <name>..\..\..\..\..\Src\usbh_platform.c</name>
+    <name>..\..\..\..\..\Src\stm32f4xx_it.c</name>
+    <name>..\..\..\..\..\Src\stm32f4xx_hal_msp.c</name>
+    <name>..\..\..\..\..\Src\stm32f4xx_hal_timebase_TIM.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_hcd.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_usb.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_adc.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_adc_ex.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_fsmc.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_sram.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_i2c.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_i2c_ex.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_rtc.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_rtc_ex.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_spi.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_tim.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_tim_ex.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_uart.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_rcc.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_rcc_ex.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_flash.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_flash_ex.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_flash_ramfunc.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_gpio.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_dma_ex.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_dma.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_pwr.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_pwr_ex.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_cortex.c</name>
+    <name>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal.c</name>
+    <name>..\..\..\..\..\Middlewares\Third_Party\FatFs\src\option\syscall.c</name>
+    <name>..\..\..\..\..\Middlewares\Third_Party\FatFs\src\option\ccsbcs.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_core.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_ctlreq.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_ioreq.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_pipes.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc_bot.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc_scsi.c</name>
+    <name>..\..\..\..\..\Middlewares\Third_Party\FatFs\src\diskio.c</name>
+    <name>..\..\..\..\..\Middlewares\Third_Party\FatFs\src\ff.c</name>
+    <name>..\..\..\..\..\Middlewares\Third_Party\FatFs\src\ff_gen_drv.c</name>
+    <name>..\..\..\..\..\\Src\system_stm32f4xx.c</name>
+    <name>..\..\..\..\..\Drivers\CMSIS\Device\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c</name>
+    <name>..\..\..\..\..\Middlewares\Third_Party\FatFs\src\option\syscall.c</name>
+    <name>..\..\..\..\..\Middlewares\Third_Party\FatFs\src\option\ccsbcs.c</name>
+    <name>..\..\..\..\..\Middlewares\Third_Party\FatFs\src\diskio.c</name>
+    <name>..\..\..\..\..\Middlewares\Third_Party\FatFs\src\ff.c</name>
+    <name>..\..\..\..\..\Middlewares\Third_Party\FatFs\src\ff_gen_drv.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_core.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_ctlreq.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_ioreq.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_pipes.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc_bot.c</name>
+    <name>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc_scsi.c</name>
     </file>
 </filestoremove>
 
@@ -17,6 +86,14 @@
 	   <include></include>
     </Aincludes>
 	<Cincludes>
+	   		<include>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Inc</include>
+	   		<include>..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Inc\Legacy</include>
+	   		<include>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Inc</include>
+	   		<include>..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc</include>
+	   		<include>..\..\..\..\..\Drivers\CMSIS\Device\ST\STM32F4xx\Include</include>
+	   		<include>..\..\..\..\..\Middlewares\Third_Party\FatFs\src</include>
+	   		<include>..\..\..\..\..\Drivers\CMSIS\Include</include>
+	   		<include>..\..\..\..\..\Inc</include>
     </Cincludes>
 </inctoremove>
 
@@ -32,7 +109,7 @@
     <usedDebug>true</usedDebug>
     	<debugprobe>swd</debugprobe>
     <optimization>6</optimization>
-    <icfloc>0</icfloc>
+    <icfloc>1</icfloc>
     <Adefines>
         <define></define>
     </Adefines>   
@@ -58,14 +135,14 @@
     </definestoremove>
     
 	<Cincludes>
-	   <include>..\Inc</include>
-	   <include>..\Drivers\STM32F4xx_HAL_Driver\Inc</include>
-	   <include>..\Drivers\STM32F4xx_HAL_Driver\Inc\Legacy</include>
-	   <include>..\Middlewares\ST\STM32_USB_Host_Library\Core\Inc</include>
-	   <include>..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc</include>
-	   <include>..\Drivers\CMSIS\Device\ST\STM32F4xx\Include</include>
-	   <include>..\Middlewares\Third_Party\FatFs\src</include>
-	   <include>..\Drivers\CMSIS\Include</include>
+	   <include>..\..\..\..\..\..\Inc</include>
+	   <include>..\..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Inc</include>
+	   <include>..\..\..\..\..\..\Drivers\STM32F4xx_HAL_Driver\Inc\Legacy</include>
+	   <include>..\..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Core\Inc</include>
+	   <include>..\..\..\..\..\..\Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc</include>
+	   <include>..\..\..\..\..\..\Drivers\CMSIS\Device\ST\STM32F4xx\Include</include>
+	   <include>..\..\..\..\..\..\Middlewares\Third_Party\FatFs\src</include>
+	   <include>..\..\..\..\..\..\Drivers\CMSIS\Include</include>
 
     </Cincludes>
       </config>
@@ -78,43 +155,43 @@
                     <group>
                             <name>FatFs</name>
                                             <file>
-                                                    <name>../Middlewares/Third_Party/FatFs/src/option/syscall.c</name>
+                                                    <name>../../../../../../Middlewares/Third_Party/FatFs/src/option/syscall.c</name>
                                             </file>
                                             <file>
-                                                    <name>../Middlewares/Third_Party/FatFs/src/option/ccsbcs.c</name>
+                                                    <name>../../../../../../Middlewares/Third_Party/FatFs/src/option/ccsbcs.c</name>
                                             </file>
                                             <file>
-                                                    <name>../Middlewares/Third_Party/FatFs/src/diskio.c</name>
+                                                    <name>../../../../../../Middlewares/Third_Party/FatFs/src/diskio.c</name>
                                             </file>
                                             <file>
-                                                    <name>../Middlewares/Third_Party/FatFs/src/ff.c</name>
+                                                    <name>../../../../../../Middlewares/Third_Party/FatFs/src/ff.c</name>
                                             </file>
                                             <file>
-                                                    <name>../Middlewares/Third_Party/FatFs/src/ff_gen_drv.c</name>
+                                                    <name>../../../../../../Middlewares/Third_Party/FatFs/src/ff_gen_drv.c</name>
                                             </file>
                 </group>
                     <group>
                             <name>USB_Host_Library</name>
                                             <file>
-                                                    <name>../Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c</name>
+                                                    <name>../../../../../../Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c</name>
                                             </file>
                                             <file>
-                                                    <name>../Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.c</name>
+                                                    <name>../../../../../../Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.c</name>
                                             </file>
                                             <file>
-                                                    <name>../Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.c</name>
+                                                    <name>../../../../../../Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.c</name>
                                             </file>
                                             <file>
-                                                    <name>../Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.c</name>
+                                                    <name>../../../../../../Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_pipes.c</name>
                                             </file>
                                             <file>
-                                                    <name>../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.c</name>
+                                                    <name>../../../../../../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.c</name>
                                             </file>
                                             <file>
-                                                    <name>../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c</name>
+                                                    <name>../../../../../../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c</name>
                                             </file>
                                             <file>
-                                                    <name>../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.c</name>
+                                                    <name>../../../../../../Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.c</name>
                                             </file>
                 </group>
       </group> 
@@ -123,88 +200,88 @@
 		   <group>
 		 		<name>STM32F4xx_HAL_Driver</name>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_hcd.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_hcd.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usb.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usb.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc_ex.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc_ex.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_fsmc.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_fsmc.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_sram.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_sram.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c_ex.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c_ex.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rtc.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rtc.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rtc_ex.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rtc_ex.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ramfunc.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ramfunc.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma_ex.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma_ex.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c</name>
 						</file>
 						<file>
-							<name>../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c</name>
+							<name>../../../../../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c</name>
 						</file>
 		    </group>
 		    <group>
 		    	<name>CMSIS</name>
 							<file>
-								<name>../\Src/system_stm32f4xx.c</name>
+								<name>../../../../../../\Src/system_stm32f4xx.c</name>
 							</file>
 		    	</group>
 	  </group>   
@@ -213,71 +290,71 @@
 	    <group>
 	      <name>User</name>  
                                 <file>
-                                 <name>..\Src\main.c</name>
+                                 <name>..\..\..\..\..\..\Src\main.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\gpio.c</name>
+                                 <name>..\..\..\..\..\..\Src\gpio.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\adc.c</name>
+                                 <name>..\..\..\..\..\..\Src\adc.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\usbh_diskio.c</name>
+                                 <name>..\..\..\..\..\..\Src\usbh_diskio.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\fatfs.c</name>
+                                 <name>..\..\..\..\..\..\Src\fatfs.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\fsmc.c</name>
+                                 <name>..\..\..\..\..\..\Src\fsmc.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\i2c.c</name>
+                                 <name>..\..\..\..\..\..\Src\i2c.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\rtc.c</name>
+                                 <name>..\..\..\..\..\..\Src\rtc.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\spi.c</name>
+                                 <name>..\..\..\..\..\..\Src\spi.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\tim.c</name>
+                                 <name>..\..\..\..\..\..\Src\tim.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\usart.c</name>
+                                 <name>..\..\..\..\..\..\Src\usart.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\usb_host.c</name>
+                                 <name>..\..\..\..\..\..\Src\usb_host.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\usbh_conf.c</name>
+                                 <name>..\..\..\..\..\..\Src\usbh_conf.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\usbh_platform.c</name>
+                                 <name>..\..\..\..\..\..\Src\usbh_platform.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\stm32f4xx_it.c</name>
+                                 <name>..\..\..\..\..\..\Src\stm32f4xx_it.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\stm32f4xx_hal_msp.c</name>
+                                 <name>..\..\..\..\..\..\Src\stm32f4xx_hal_msp.c</name>
                                 </file>
 
                                 <file>
-                                 <name>..\Src\stm32f4xx_hal_timebase_TIM.c</name>
+                                 <name>..\..\..\..\..\..\Src\stm32f4xx_hal_timebase_TIM.c</name>
                                 </file>
 
 

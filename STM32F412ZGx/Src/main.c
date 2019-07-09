@@ -82,7 +82,7 @@ extern ApplicationTypeDef Appli_state;
 const uint8_t fpga_key[FPGA_KEY_SIZE] = {'A','E','W','I','N','1','6','8'};
 
 uint8_t fpga_spi_switch = FPGA_SPI_SWITCH_OFF;
-uint8_t fpga_spi_mode = FLASH_SELECT_NONE;
+uint8_t fpga_spi_mode = FLASH_NONE;
 uint8_t fpga_key_readback[FPGA_KEY_SIZE];
 uint8_t fpga_info[FPGA_INFO_SIZE];
 uint8_t fpga_busy_status[FPGA_BUSY_STATUS_SIZE];
@@ -173,7 +173,15 @@ int main(void)
   aewin_dbg("================\r\n");
 
 
-  aewin_dbg("Unlock FPGA\r\n");
+  // print booting date and time
+  HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
+  HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
+  aewin_dbg("RTC Date: 20%02x.%02x.%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date);
+  aewin_dbg("RTC Time: %02x:%02x:%02x\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+  aewin_dbg("--------------------\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+
+
+  aewin_dbg("Unlock FPGA.\r\n");
   //--------------------------------
   // Unlock FPGA key
   i2c2_fpga_write(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key);
@@ -181,6 +189,7 @@ int main(void)
   // Read FPGA key
   i2c2_fpga_read(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key_readback);
 
+  aewin_dbg("Read FPGA information.\r\n");
   // Read FPGA information - version and time
   i2c2_fpga_read(FPGA_INFO_BASE_ADDR, FPGA_INFO_SIZE, (uint8_t*)fpga_info);
   aewin_dbg("FPGA version: %d.%d.%d\r\n", fpga_info[0], fpga_info[1], fpga_info[2]);
@@ -190,6 +199,14 @@ int main(void)
   i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
   aewin_dbg("FPGA busy bit: %x\r\n", fpga_busy_status[4]);
   aewin_dbg("FPGA busy status: %x %x %x\r\n", fpga_busy_status[7], fpga_busy_status[6], fpga_busy_status[5]);
+
+  // check FPGA information. If all byte are abnormal, output error code
+  if((fpga_info[5] == FPGA_DEFULT_RETURN_VALUE) && (fpga_info[6] == FPGA_DEFULT_RETURN_VALUE) && (fpga_info[7] == FPGA_DEFULT_RETURN_VALUE))
+  {
+	// user can not distinguish this is I2C2 failed or FPGA unlock failed.
+	usb_err_code = USB_FPGA_RW_FAILED;
+    aewin_dbg("Access FPGA failed.\r\n");
+  }
   //--------------------------------
 
   /*Start the TIM Base generation in interrupt mode ####################*/
@@ -245,7 +262,7 @@ int main(void)
 	}
     //-----------------------------------------------------------------------------------------------
 
-	// Check USB status only if aewin_file.txt in USB disk haven't been read
+	// Check USB status and do file operations only if aewin_file.txt in USB disk haven't been read
     if(usb_read_flag == 0)
     {
     	if(Appli_state == APPLICATION_READY)
@@ -259,11 +276,15 @@ int main(void)
 				USB_MSC_File_Operations(USB_EXE_READ_CMD);
 				fpga_spi_mode = usb_cmd_flash_num;
 
-				// [debug]
+				// [debug] - specify user command code
 				//usb_cmd_code = USB_CMD_READ_LOG;
 
 				switch(usb_cmd_code)
 				{
+					case USB_CMD_NONE:
+						//none
+						break;
+
 					case USB_CMD_READ_LOG:
 						aewin_dbg("Get command: Read log from FPGA.\r\n");
 						USB_MSC_File_Operations(USB_CMD_READ_LOG);
@@ -278,9 +299,16 @@ int main(void)
 						if(fpga_spi_mode > FLASH_NUM)
 						{
 							// flash number is out of range, stopping execute user command
-							aewin_dbg("Flash number %d is out of range, please try number 1~4.\r\n", fpga_spi_mode);
+							aewin_dbg("Flash number %d is not exist, please try number 1~4.\r\n", fpga_spi_mode);
 							usb_err_code = USB_ERR_FLASH_NOT_EXIST;
+							break;
+						}
 
+						// check ima file name
+						if(usb_cmd_ima_filename[IMA_FILE_PATH_HEAD_LEN + 1] == '\0')
+						{
+							aewin_dbg("The .ima file name not exist.\r\n");
+							usb_err_code = USB_ERR_IMA_NOT_EXIST;
 							break;
 						}
 
@@ -309,14 +337,6 @@ int main(void)
 
 						break;
 
-
-					//--------------
-					// below are test command
-					//--------------
-
-					case USB_CMD_ERASE_FLASH:
-						break;
-
 					case USB_CMD_READ_FLASH:
 						aewin_dbg("Get command: Read flash data.\r\n");
 
@@ -326,7 +346,6 @@ int main(void)
 							// flash number is out of range, stopping execute user command
 							aewin_dbg("Flash number %d is out of range, please try number 1~4.\r\n", fpga_spi_mode);
 							usb_err_code = USB_ERR_FLASH_NOT_EXIST;
-
 							break;
 						}
 
@@ -344,6 +363,13 @@ int main(void)
 
 						break;
 
+					//------------------------------
+					// below are test command
+					//------------------------------
+
+					case USB_CMD_ERASE_FLASH:
+						break;
+
 					case USB_CMD_TEST_RW:
 						aewin_dbg("Get command: Test read/writ function.\r\n");
 						USB_MSC_File_Operations(USB_CMD_TEST_RW);
@@ -352,7 +378,7 @@ int main(void)
 
 					default:
 						usb_err_code = USB_ERR_CMD_NOT_EXIST;
-						aewin_dbg("!! This command is not exist !!.\r\n");
+						aewin_dbg("!! This command is not exist!\r\n");
 
 						break;
 				}
@@ -362,12 +388,14 @@ int main(void)
 			if(usb_err_code != USB_ERR_NONE)
 			{
 				USB_MSC_File_Operations(USB_EXE_ERROR_REPORT);
+				// [note] - print error massage
 			}
 		}
     }
     else if(Appli_state == APPLICATION_DISCONNECT)
 	{
-		if(usb_read_flag == 1)
+		// when USB disconnect, clear read flag
+    	if(usb_read_flag == 1)
 		{
 			usb_read_flag = 0;
 		}

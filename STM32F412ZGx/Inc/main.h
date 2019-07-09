@@ -111,11 +111,14 @@ typedef enum{
 }eUSB_ErrorCodes;
 
 // --------------------------------
-// UIMA File Information
+// IMA File Information
 // --------------------------------
 #define IMA_FILE_SIZE          32*1024*1024  // 32MB
 #define IMA_FILENAME_LEN_LIMIT 25
 #define IMA_FILE_PATH_HEAD_LEN 2             // 0:
+
+#define IMA_FILE_NONE          0             // user didn't give ima file name
+#define IMA_FILE_TAG           0x5A
 
 // --------------------------------
 // I2C Information
@@ -137,18 +140,20 @@ typedef enum{
 #define FPGA_SPI_MODE_ADDR         0x11
 #define FPGA_BUSY_STATUS_BASE_ADDR 0x14
 
-#define FPGA_DEFULT_RETURN_VALUE   0x0A     // if FPGA unlock failed, all command will get the same return value
+#define FPGA_DEFULT_RETURN_VALUE   0xFF     // if FPGA unlock failed, all command will get the same return value
 
-#define FPGA_SPI_SWITCH_ON   0x01
-#define FPGA_SPI_SWITCH_OFF  0x00
+// fpga - SPI EN
+#define FPGA_SPI_SWITCH_ON   1
+#define FPGA_SPI_SWITCH_OFF  0
 
-#define FPGA_DATA_BYTE_SIZE    2    // read 16bit at 1 time
-#define FPGA_DATA_NUM          32
-#define FPGA_LOG_NUM           30
-#define FPGA_DATA_BYTE_NUM     256  // byte
-#define FPGA_DATA_SKIP_NUM     8    // first 2 data is not log
-#define FPGA_LOG_BYTE_NUM      (FPGA_DATA_BYTE_NUM - FPGA_DATA_SKIP_NUM * FPGA_DATA_BYTE_SIZE)
+#define FPGA_DATA_BYTE_SIZE  2    // read 16bit at 1 time
+#define FPGA_DATA_NUM        32
+#define FPGA_LOG_NUM         30
+#define FPGA_DATA_BYTE_NUM   256  // byte
+#define FPGA_DATA_SKIP_NUM   8    // first 2 data is not log
+#define FPGA_LOG_BYTE_NUM    (FPGA_DATA_BYTE_NUM - FPGA_DATA_SKIP_NUM * FPGA_DATA_BYTE_SIZE)
 
+// fpga - log
 typedef enum{
   FPGA_LOG_BIOS    = 0, /*!< BIOS Number in FPGA log*/
   FPGA_LOG_BMC     = 1, /*!< BMC Number in FPGA log*/
@@ -176,8 +181,11 @@ typedef enum{
 // FLASH Information
 // --------------------------------
 #define FLASH_NUM            4
-
-#define FLASH_SELECT_NONE    0x00
+#define FLASH_NONE           0 // user didn't give flash number
+#define FLASH_BIOS           1 //wait fpga define
+#define FLASH_BMC            2 //wait fpga define
+#define FLASH_BIO_BACKUP     3 //wait fpga define
+#define FLASH_BMC_BACKUP     4 //wait fpga define
 
 // --------------------------------
 // SPI Information
