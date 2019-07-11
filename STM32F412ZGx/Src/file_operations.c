@@ -96,7 +96,7 @@ volatile uint8_t flash_data_read_byte[1];
 
 uint32_t flash_program_address = 0;
 
-uint8_t flash_data_str[3];
+//uint8_t flash_data_str[FLASH_DATA_BYTE + FLASH_SPACE_BYTE];
 
 uint8_t backup_flag[2] = {0, 0};
 
@@ -108,7 +108,7 @@ const uint8_t usb_aewin_file_name[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMI
 
 uint8_t usb_ima_file_path[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:";
 
-uint8_t usb_write_str[3*16+2];
+uint8_t usb_write_str[FLASH_WRITE_ROW_NUM*( (FLASH_DATA_BYTE + FLASH_SPACE_BYTE) * FLASH_ROW_DATA_LIMIT + 1)];
 
 extern uint8_t usb_err_code;
 extern uint8_t usb_cmd_code;
@@ -134,6 +134,10 @@ extern uint8_t fpga_info[FPGA_INFO_SIZE];;
 extern RTC_TimeTypeDef RTC_Time;
 extern RTC_DateTypeDef RTC_Date;
 
+//---------------
+// Other variables
+//---------------
+uint8_t sprintf_offset = 0;
 
 //debug
 uint8_t flag_RWfailed = 0;
@@ -985,8 +989,8 @@ void USB_MSC_File_Operations(unsigned char command_type)
 				if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
 				{
 					//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
-					for(loop_index = 0; loop_index < (4*32); loop_index++)
-					//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT/8; loop_index++)
+					//for(loop_index = 0; loop_index < (4*32); loop_index++)
+					for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT/8; loop_index++)
 					{
 						if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
 						{
@@ -1000,6 +1004,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						//res= f_write (&WriteFile, &loop_index, 1, (void *)&bytesWritten);
 
 						// write flash data to a .txt file
+						/*
 						for(page_data_index = 0; page_data_index < sizeof(flash_data_read); page_data_index++)
 						{
 							sprintf(flash_data_str,"%02x ",flash_data_read[page_data_index]);
@@ -1015,6 +1020,29 @@ void USB_MSC_File_Operations(unsigned char command_type)
 							//sprintf(flash_data_str,"%02x ",flash_data_read[page_data_index]);
 							//res= f_write (&WriteFile, flash_data_str, sizeof(flash_data_str), (void *)&bytesWritten);
 						}
+						*/
+
+						// write flash data to a .txt file - no strcat
+						sprintf_offset = 0;
+						for(page_data_index = 0; page_data_index < sizeof(flash_data_read); page_data_index++)
+						{
+							sprintf_offset += sprintf(usb_write_str + sprintf_offset, "%02X ", flash_data_read[page_data_index]);
+
+							if(page_data_index % FLASH_ROW_DATA_LIMIT == (FLASH_ROW_DATA_LIMIT - 1))
+							{
+								usb_write_str[sprintf_offset - 1] = '\r';
+								usb_write_str[sprintf_offset] = '\n';
+								sprintf_offset = sprintf_offset + 1;
+							}
+
+							if(page_data_index % (FLASH_WRITE_ROW_NUM * FLASH_ROW_DATA_LIMIT) == (FLASH_WRITE_ROW_NUM * FLASH_ROW_DATA_LIMIT - 1))
+							{
+								res= f_write(&WriteFile, usb_write_str, sizeof(usb_write_str), (void *)&bytesWritten);
+								sprintf_offset = 0;
+								memset(usb_write_str, '\0', sizeof(usb_write_str));
+							}
+						}
+
 					}
 				}
 

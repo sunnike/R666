@@ -207,6 +207,14 @@ typedef enum{
 #define FLASH_CMD_BULK_ERASE         0xC7
 #define FLASH_CMD_PAGE_PROGRAM       0x12
 
+#define FLASH_ROW_DATA_LIMIT         16
+#define FLASH_DATA_BYTE              2
+#define FLASH_SPACE_BYTE             1
+//#define FLASH_NEWLINE_BYTE           1
+//#define FLASH_RETURN_BYTE            1
+#define FLASH_WRITE_ROW_NUM          4    // [user config]1,2,4,(8,16)
+
+
 
 /** @defgroup Timer_Flag_Enumeration_definition Timer Flags definition
   * @brief  Timer Flags definition
