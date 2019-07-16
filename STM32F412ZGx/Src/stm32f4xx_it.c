@@ -36,6 +36,8 @@
 #include "stm32f4xx_it.h"
 
 /* USER CODE BEGIN 0 */
+#include "main.h"
+
 volatile unsigned char time_states;
 /* USER CODE END 0 */
 
@@ -68,7 +70,7 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-
+	aewin_dbg("HardFault interrupt!\r\n");
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {

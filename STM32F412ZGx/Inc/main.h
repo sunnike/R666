@@ -212,7 +212,7 @@ typedef enum{
 #define FLASH_SPACE_BYTE             1
 //#define FLASH_NEWLINE_BYTE           1
 //#define FLASH_RETURN_BYTE            1
-#define FLASH_WRITE_ROW_NUM          4    // [user config]1,2,4,(8,16)
+#define FLASH_WRITE_ROW_NUM          1    // [user config]1,2,4,(8,16)
 
 
 
