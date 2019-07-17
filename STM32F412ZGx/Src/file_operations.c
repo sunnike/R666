@@ -51,6 +51,7 @@
 #include "ff.h"
 #include "spi.h"
 #include "rtc.h"
+#include "fatfs.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -639,7 +640,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			if(f_open(&WriteFile, "0:log_report_format.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
-				aewin_dbg("Saving log failed.\r\n");
+				aewin_dbg("Open log_report file failed.\r\n");
 			}
 			else
 			{
@@ -771,7 +772,11 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					}
 					fpga_log_addr++;
 				}
-				f_close(&WriteFile);
+
+				if(f_close(&WriteFile) != FR_OK)
+				{
+					aewin_dbg("Close log_report file failed.\r\n");
+				}
 			}
 			aewin_dbg("Saving log finished.\r\n");
 
@@ -889,6 +894,13 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			break;
 
 		case USB_EXE_READ_CMD:
+			res = f_mount(&USBHFatFS, "0:", 1);
+
+			if(res != FR_OK)
+			{
+				aewin_dbg("USB mount failed: %d\r\n");
+			}
+
 			if(f_open(&MyFile, usb_aewin_file_name, FA_READ) != FR_OK)
 			{
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
@@ -1057,6 +1069,107 @@ void USB_MSC_File_Operations(unsigned char command_type)
 		//------below are debug/test command-------
 
 		case USB_CMD_TEST_RW:
+
+			//LCD_UsrLog("INFO : FatFs Initialized \n");
+			if(f_open(&MyFile, usb_file_name,FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+			{
+			  //LCD_ErrLog("Cannot Open 'USBHost.txt' file \n");
+				aewin_dbg("Cannot Open '%s' file.\r\n", usb_file_name);
+			}
+			else
+			{
+			  //LCD_UsrLog("INFO : 'USBHost.txt' opened for write  \n");
+				//aewin_dbg("'%s' opened for write.\r\n", usb_file_name);
+
+			  res= f_write (&MyFile, wtext, sizeof(wtext), (void *)&bytesWritten);
+			  f_close(&MyFile);
+
+			  if((bytesWritten == 0) || (res != FR_OK)) /*EOF or Error*/
+			  {
+				//LCD_ErrLog("Cannot Write on the  'USBHost.txt' file \n");
+				  aewin_dbg("Cannot Write on the '%s' file.\r\n", usb_file_name);
+			  }
+			  else
+			  {
+				if(f_open(&MyFile, usb_file_name, FA_READ) != FR_OK)
+				{
+				  //LCD_ErrLog("Cannot Open 'USBHost.txt' file for read.\n");
+					aewin_dbg("Cannot Open '%s' file.\r\n", usb_file_name);
+				}
+				else
+				{
+				  //LCD_UsrLog("INFO : Text written on the 'USBHost.txt' file \n");
+
+				  res = f_read(&MyFile, rtext, sizeof(rtext), (void *)&bytesread);
+
+				  if((bytesread == 0) || (res != FR_OK)) /*EOF or Error*/
+				  {
+					//LCD_ErrLog("Cannot Read from the  'USBHost.txt' file \n");
+					  aewin_dbg("Cannot Read from the '%s' file.\r\n", usb_file_name);
+				  }
+				  else
+				  {
+					//LCD_UsrLog("Read Text : \n");
+					//LCD_DbgLog((char *)rtext);
+					//LCD_DbgLog("\n");
+				  }
+				  f_close(&MyFile);
+				}
+				/* Compare read data with the expected data */
+				if((bytesread == bytesWritten))
+				{
+				  //LCD_UsrLog("INFO : FatFs data compare SUCCES");
+				  //LCD_UsrLog("\n");
+				}
+				else
+				{
+				  //LCD_ErrLog("FatFs data compare ERROR");
+				  //LCD_ErrLog("\n");
+				}
+			  }
+			}
+
+
+			//--------------
+			// try to read .txt file
+			if(f_open(&ReadFile, usb_file_name, FA_READ) != FR_OK)
+			{
+				usb_err_code = USB_ERR_FILE_RW_FAILED;
+				aewin_dbg("Cannot open the '%s' file for read.\r\n", usb_file_name);
+			}
+			else
+			{
+				// open a new file to store read file
+				if(f_open(&WriteFile, "0:read_test_output.txt",FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+				{
+					usb_err_code = USB_ERR_FILE_RW_FAILED;
+					aewin_dbg("Cannot open the '%s' file for write.\r\n", usb_file_name);
+				}
+				else
+				{
+					res_read = f_read(&ReadFile, rtext, sizeof(rtext), (void *)&bytesread);
+					if((bytesread == 0) || (res_read != FR_OK)) /*EOF or Error*/
+					{
+						usb_err_code = USB_ERR_FILE_RW_FAILED;
+						aewin_dbg("Cannot Read from the '%s' file.\r\n", usb_file_name);
+					}
+					else
+					{
+						res= f_write (&WriteFile, rtext, sizeof(rtext), (void *)&bytesWritten);
+						f_close(&MyFile);
+
+						if((bytesWritten == 0) || (res != FR_OK)) /*EOF or Error*/
+						{
+							// write failed
+							aewin_dbg("Cannot write output file.\r\n");
+						}
+
+					}
+
+					f_close(&ReadFile);
+					f_close(&WriteFile);
+				}
+			}
 			break;
 
 		default:

@@ -88,11 +88,11 @@ typedef enum{
   USB_CMD_NONE         = 0x00, /*!< Specifies the command for none. */
   USB_CMD_READ_LOG     = 0x01, /*!< Specifies the command for read log and save to USB disk. */
   USB_CMD_UPDATE_IMA   = 0x02, /*!< Specifies the command for update flash with .ima file in USB disk. */
-  USB_EXE_READ_CMD,            /*!< Specifies the operation for read user command. */
-  USB_EXE_ERROR_REPORT,        /*!< Specifies the operation for generate a error report. */
   USB_CMD_READ_FLASH,          /*!< Specifies the command for read flash. */
-  USB_CMD_ERASE_FLASH  = 0xE1, /*!< Specifies the command for erase flash. */
-  USB_CMD_TEST_RW      = 0xE2  /*!< Specifies the command for function test, write and read a .txt file. */
+  USB_CMD_ERASE_FLASH,         /*!< Specifies the command for erase flash. */
+  USB_CMD_TEST_RW,             /*!< Specifies the command for function test, write and read a .txt file. */
+  USB_EXE_READ_CMD     = 0xE1, /*!< Specifies the operation for read user command. */
+  USB_EXE_ERROR_REPORT         /*!< Specifies the operation for generate a error report. */
 }eUSB_Cmds;
 
 // --------------------------------
@@ -114,7 +114,7 @@ typedef enum{
 // IMA File Information
 // --------------------------------
 #define IMA_FILE_SIZE          32*1024*1024  // 32MB
-#define IMA_FILENAME_LEN_LIMIT 25
+#define IMA_FILENAME_LEN_LIMIT 30
 #define IMA_FILE_PATH_HEAD_LEN 2             // 0:
 
 #define IMA_FILE_NONE          0             // user didn't give ima file name

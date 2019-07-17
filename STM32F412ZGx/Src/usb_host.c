@@ -138,7 +138,7 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
   case HOST_USER_DISCONNECTION:
 	Appli_state = APPLICATION_DISCONNECT;
-	if(f_mount(NULL, "", 0) != FR_OK)
+	if(f_mount(NULL, "", 1) != FR_OK)
 	{
 	  //LCD_ErrLog("ERROR : Cannot DeInitialize FatFs! \n");
 		aewin_dbg("ERROR : Cannot DeInitialize FatFs!\r\n");
