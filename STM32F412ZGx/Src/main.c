@@ -93,8 +93,11 @@ uint8_t usb_read_flag = 0;
 uint8_t usb_cmd_code = USB_CMD_NONE;
 uint8_t usb_err_code = USB_ERR_NONE;
 
-uint8_t usb_cmd_flash_num = 0;
+uint8_t usb_cmd_flash_num = FLASH_NONE;
 uint8_t usb_cmd_ima_filename[IMA_FILENAME_LEN_LIMIT];
+
+uint8_t usb_cmd_re_read_flash = RE_READ_FLASH_OFF;
+uint8_t backup_flag[2] = {RE_READ_FLASH_OFF, RE_READ_FLASH_OFF};
 
 // time variables
 extern volatile unsigned char time_states;
@@ -289,6 +292,50 @@ int main(void)
 						aewin_dbg("Get command: Read log from FPGA.\r\n");
 						USB_MSC_File_Operations(USB_CMD_READ_LOG);
 
+						if(usb_cmd_re_read_flash == RE_READ_FLASH_ON)
+						{
+							if(backup_flag[BACKUP_FLAG_BIOS] == 1)
+							{
+								// select target flash
+								fpga_spi_mode = FLASH_BIOS_BACKUP;
+								i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
+								aewin_dbg("Select flash %d for reading.\r\n", fpga_spi_mode);
+
+								// enable FPGA SPI
+								fpga_spi_switch = FPGA_SPI_SWITCH_ON;
+								i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
+								aewin_dbg("Enable FPGA SPI.\r\n");
+
+								// read flash
+								USB_MSC_File_Operations(USB_CMD_READ_FLASH);
+							}
+							if(backup_flag[BACKUP_FLAG_BMC] == 1)
+							{
+								// select target flash
+								fpga_spi_mode = FLASH_BMC_BACKUP;
+								i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
+								aewin_dbg("Select flash %d for reading.\r\n", fpga_spi_mode);
+
+								// enable FPGA SPI
+								fpga_spi_switch = FPGA_SPI_SWITCH_ON;
+								i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
+								aewin_dbg("Enable FPGA SPI.\r\n");
+
+								// read flash
+								USB_MSC_File_Operations(USB_CMD_READ_FLASH);
+							}
+
+							// disable FPGA SPI
+							fpga_spi_switch = FPGA_SPI_SWITCH_OFF;
+							i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
+							aewin_dbg("Disable FPGA SPI.\r\n");
+
+							// de-select target flash
+							fpga_spi_mode = FLASH_NONE;
+							i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
+							aewin_dbg("Select flash %d for reading.\r\n", fpga_spi_mode);
+						}
+
 						break;
 
 					case USB_CMD_UPDATE_IMA:
@@ -335,6 +382,16 @@ int main(void)
 						// update flash - write .ima file to flash
 						USB_MSC_File_Operations(USB_CMD_UPDATE_IMA);
 
+						// disable FPGA SPI
+						fpga_spi_switch = FPGA_SPI_SWITCH_OFF;
+						i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
+						aewin_dbg("Disable FPGA SPI.\r\n");
+
+						// de-select target flash
+						fpga_spi_mode = FLASH_NONE;
+						i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
+						aewin_dbg("Select flash %d for reading.\r\n", fpga_spi_mode);
+
 						break;
 
 					case USB_CMD_READ_FLASH:
@@ -351,7 +408,7 @@ int main(void)
 
 						// select target flash
 						i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
-						aewin_dbg("Select flash %d for update.\r\n", fpga_spi_mode);
+						aewin_dbg("Select flash %d for reading.\r\n", fpga_spi_mode);
 
 						// enable FPGA SPI
 						fpga_spi_switch = FPGA_SPI_SWITCH_ON;
@@ -360,6 +417,16 @@ int main(void)
 
 						// read flash
 						USB_MSC_File_Operations(USB_CMD_READ_FLASH);
+
+						// disable FPGA SPI
+						fpga_spi_switch = FPGA_SPI_SWITCH_OFF;
+						i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
+						aewin_dbg("Disable FPGA SPI.\r\n");
+
+						// de-select target flash
+						fpga_spi_mode = FLASH_NONE;
+						i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
+						aewin_dbg("Select flash %d for reading.\r\n", fpga_spi_mode);
 
 						break;
 

@@ -121,6 +121,15 @@ typedef enum{
 #define IMA_FILE_TAG           0x5A
 
 // --------------------------------
+// RE Read Flash Information
+// --------------------------------
+#define RE_READ_FLASH_ON     1
+#define RE_READ_FLASH_OFF    0
+
+#define BACKUP_FLAG_BIOS     0
+#define BACKUP_FLAG_BMC      1
+
+// --------------------------------
 // I2C Information
 // --------------------------------
 #define I2C2_FPGA_ADDR 0xB0                  //FPGA device address
@@ -182,10 +191,10 @@ typedef enum{
 // --------------------------------
 #define FLASH_NUM            4
 #define FLASH_NONE           0 // user didn't give flash number
-#define FLASH_BIOS           1 //wait fpga define
-#define FLASH_BMC            2 //wait fpga define
-#define FLASH_BIO_BACKUP     3 //wait fpga define
-#define FLASH_BMC_BACKUP     4 //wait fpga define
+#define FLASH_BIOS           1
+#define FLASH_BIOS_BACKUP    2
+#define FLASH_BMC            3
+#define FLASH_BMC_BACKUP     4
 
 // --------------------------------
 // SPI Information

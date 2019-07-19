@@ -75,6 +75,7 @@ const uint8_t wtext[] = "USB Host Library : Mass Storage Example";
 const uint8_t usb_rtext_file_cmd[] = "command:";
 const uint8_t usb_rtext_file_flash_num[] = "flash_number:";
 const uint8_t usb_rtext_file_ima_name[] = "ima_file";
+const uint8_t usb_rtext_file_re_read_flash[] = "re_read_flash:";
 const uint8_t usb_wtext_error_msg[] = "error code:";
 
 uint8_t usb_rtext_buffer[sizeof(usb_rtext_file_ima_name)+IMA_FILENAME_LEN_LIMIT];
@@ -99,8 +100,6 @@ uint32_t flash_program_address = 0;
 
 //uint8_t flash_data_str[FLASH_DATA_BYTE + FLASH_SPACE_BYTE];
 
-uint8_t backup_flag[2] = {0, 0};
-
 //---------------
 // USB variables
 //---------------
@@ -115,6 +114,8 @@ extern uint8_t usb_err_code;
 extern uint8_t usb_cmd_code;
 extern uint8_t usb_cmd_flash_num;
 extern uint8_t usb_cmd_ima_filename[IMA_FILENAME_LEN_LIMIT];
+extern uint8_t usb_cmd_re_read_flash;
+extern uint8_t backup_flag[2];
 
 //---------------
 // FPGA variables
@@ -698,8 +699,16 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						// check fpga last log, if RE happened, set flag for mark which flash should be read to USB disk
 						if( ((loop_index + 1) / 4) == fpga_last_log)
 						{
-							backup_flag[0] = fpga_log[FPGA_LOG_BIOS];
-							backup_flag[1] = fpga_log[FPGA_LOG_BMC];
+							//backup_flag[0] = fpga_log[FPGA_LOG_BIOS];
+							//backup_flag[1] = fpga_log[FPGA_LOG_BMC];
+							if(fpga_log[FPGA_LOG_BIOS] == FPGA_LOG_RE)
+							{
+								backup_flag[BACKUP_FLAG_BIOS] = RE_READ_FLASH_ON;
+							}
+							if(fpga_log[FPGA_LOG_BMC] == FPGA_LOG_RE)
+							{
+								backup_flag[BACKUP_FLAG_BMC] = RE_READ_FLASH_ON;
+							}
 						}
 
 						// print log, convert hex-log to text
@@ -965,6 +974,21 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					strcat(usb_ima_file_path, usb_cmd_ima_filename);
 					aewin_dbg("Get USB .ima file name: %s\r\n", usb_cmd_ima_filename);
 				}
+
+				// check RE read flash data setting
+				// usb_rtext_file_re_read_flash
+				f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer), &MyFile);
+				usb_cmd_re_read_flash = usb_rtext_buffer[sizeof(usb_rtext_file_re_read_flash)-1] - '0';
+				for(loop_index = 0; loop_index < (sizeof(usb_rtext_file_re_read_flash)-1) ; loop_index++)
+				{
+					if(usb_rtext_buffer[loop_index] != usb_rtext_file_re_read_flash[loop_index])
+					{
+						usb_cmd_re_read_flash = RE_READ_FLASH_OFF;
+						usb_err_code = USB_ERR_FILE_WRONG_FORMAT;
+						break;
+					}
+				}
+				aewin_dbg("Get RE read flash setting: %d\r\n", usb_cmd_re_read_flash);
 
 				// [debug]
 				//f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer),&MyFile);

@@ -134,10 +134,18 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
   switch(id)
   {
   case HOST_USER_SELECT_CONFIGURATION:
+	  //[debug]
+	  aewin_dbg("USBH_UserProcess - HOST_USER_SELECT_CONFIGURATION\r\n");
 	break;
 
   case HOST_USER_DISCONNECTION:
 	Appli_state = APPLICATION_DISCONNECT;
+
+	// [debug]
+	//flag_test_write = 0;
+	aewin_dbg("USBH_UserProcess - HOST_USER_DISCONNECTION\r\n");
+
+	/*
 	if(f_mount(NULL, "", 1) != FR_OK)
 	{
 	  //LCD_ErrLog("ERROR : Cannot DeInitialize FatFs! \n");
@@ -148,10 +156,15 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 	  //LCD_ErrLog("ERROR : Cannot UnLink USB FatFS Driver! \n");
 		aewin_dbg("ERROR : Cannot UnLink USB FatFS Driver!\r\n");
 	}
+	*/
 
-	// [debug]
-	//flag_test_write = 0;
-	aewin_dbg("USBH_UserProcess - HOST_USER_DISCONNECTION\r\n");
+	if (FATFS_UnLinkDriver(USBHPath) == 0)
+	{
+	  if(f_mount(NULL, "", 0) != FR_OK)
+	  {
+		  aewin_dbg("ERROR : Cannot DeInitialize FatFs! \r\n");
+	  }
+	}
 	break;
 
   case HOST_USER_CLASS_ACTIVE:
@@ -163,6 +176,11 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
   case HOST_USER_CONNECTION:
 	Appli_state = APPLICATION_START;
+
+	//[debug]
+	aewin_dbg("USBH_UserProcess - HOST_USER_CONNECTION\r\n");
+
+	/*
 	if(FATFS_GetAttachedDriversNbr() == 0)
 	{
 		FATFS_LinkDriver(&USBH_Driver, USBHPath);
@@ -180,17 +198,15 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 		//[debug]
 		aewin_dbg("mount OK\r\n");
 	}
+	*/
 
-	//if (FATFS_LinkDriver(&USBH_Driver, USBHPath) == 0)
-	//{
-	//  if (f_mount(&USBHFatFS, "", 0) != FR_OK)
-	//  {
-	//	//LCD_ErrLog("ERROR : Cannot Initialize FatFs! \n");
-	//  }
-	//}
-
-	//[debug]
-	aewin_dbg("USBH_UserProcess - HOST_USER_CONNECTION\r\n");
+	if (FATFS_LinkDriver(&USBH_Driver, USBHPath) == 0)
+	{
+	  if (f_mount(&USBHFatFS, "", 0) != FR_OK)
+	  {
+		  aewin_dbg("ERROR : Cannot Initialize FatFs! \r\n");
+	  }
+	}
 	break;
 
   default:
