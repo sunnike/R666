@@ -62,6 +62,9 @@
 /* Private variables ---------------------------------------------------------*/
 unsigned char debug_mount = 0;
 
+extern volatile unsigned char timeout_counter;
+extern unsigned char timeout_counter_switch;
+
 //[debug]
 //extern uint8_t flag_test_write;
 /* USER CODE END PV */
@@ -207,6 +210,28 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 		  aewin_dbg("ERROR : Cannot Initialize FatFs! \r\n");
 	  }
 	}
+
+	//[Note]
+	// add start timer
+	if(timeout_counter_switch == 0)
+	{
+		timeout_counter = 0;
+		timeout_counter_switch = 1;
+	}
+	else
+	{
+		// add timeout handler, usb re-init and init
+		aewin_dbg("USB timeout_counter: %d! \r\n", timeout_counter);
+		if(timeout_counter > USB_TIMEOUT_LIMIT)
+		{
+			aewin_dbg("USB timeout! Reset USB_HOST.\r\n");
+			MX_USB_HOST_Init();
+
+			timeout_counter_switch = 0;
+			timeout_counter = 0;
+		}
+	}
+
 	break;
 
   default:

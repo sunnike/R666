@@ -93,7 +93,7 @@ const uint8_t flash_cmd_write_enable[] = {FLASH_CMD_WRITE_ENABLE};
 const uint8_t flash_cmd_clear_flag[] = {FLASH_CMD_CLEAR_FLAG};
 const uint8_t flash_cmd_bulk_erase[] = {FLASH_CMD_BULK_ERASE};
 
-volatile uint8_t flash_data_read[SPI_READ_BUFFER_SIZE];
+uint8_t flash_data_read[SPI_READ_BUFFER_SIZE];
 volatile uint8_t flash_data_read_byte[1];
 
 uint32_t flash_program_address = 0;
@@ -867,7 +867,10 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					}
 				}while(bytesread != 0);
 
-				f_close(&ReadFile);
+				if(f_close(&ReadFile) != FR_OK)
+				{
+					aewin_dbg("f_close failed.\r\n");
+				}
 			}
 			aewin_dbg("Programming finished!.\r\n");
 
@@ -903,16 +906,17 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			break;
 
 		case USB_EXE_READ_CMD:
-			res = f_mount(&USBHFatFS, "0:", 1);
+			//res = f_mount(&USBHFatFS, "0:", 1);
 
-			if(res != FR_OK)
-			{
-				aewin_dbg("USB mount failed: %d\r\n");
-			}
+			//if(res != FR_OK)
+			//{
+			//	aewin_dbg("USB mount failed: %d\r\n");
+			//}
 
 			if(f_open(&MyFile, usb_aewin_file_name, FA_READ) != FR_OK)
 			{
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
+				aewin_dbg("f_open failed.\r\n");
 			}
 			else
 			{
@@ -992,7 +996,10 @@ void USB_MSC_File_Operations(unsigned char command_type)
 
 				// [debug]
 				//f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer),&MyFile);
-				f_close(&MyFile);
+				if(f_close(&MyFile) != FR_OK)
+				{
+					aewin_dbg("f_close failed.\r\n");
+				}
 			}
 			break;
 
@@ -1007,12 +1014,15 @@ void USB_MSC_File_Operations(unsigned char command_type)
 				sprintf(fpga_log_str,"%d",usb_err_code);
 				res= f_write (&WriteFile, usb_wtext_error_msg, sizeof(usb_wtext_error_msg), (void *)&bytesWritten);
 				res= f_write(&WriteFile, fpga_log_str, 2, (void *)&bytesWritten);
-				f_close(&WriteFile);
+				if(f_close(&WriteFile) != FR_OK)
+				{
+					aewin_dbg("f_close failed.\r\n");
+				}
 			}
 			break;
 
 		case USB_CMD_READ_FLASH:
-			if(f_open(&WriteFile, "0:flash_data.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+			if(f_open(&WriteFile, "0:flash_data.ima", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				aewin_dbg("Create flash_data.txt failed.\r\n");
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
@@ -1026,7 +1036,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 				{
 					//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
 					//for(loop_index = 0; loop_index < (4*32); loop_index++)
-					for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT/8; loop_index++)
+					for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
 					{
 						if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
 						{
@@ -1059,6 +1069,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						*/
 
 						// write flash data to a .txt file - no strcat
+						/*
 						sprintf_offset = 0;
 						for(page_data_index = 0; page_data_index < sizeof(flash_data_read); page_data_index++)
 						{
@@ -1078,13 +1089,20 @@ void USB_MSC_File_Operations(unsigned char command_type)
 								memset(usb_write_str, '\0', sizeof(usb_write_str));
 							}
 						}
+						*/
+
+						// write flash data to a .ima file
+						res= f_write(&WriteFile, flash_data_read, sizeof(flash_data_read), (void *)&bytesWritten);
 
 					}
 				}
 
 				HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
-				f_close(&WriteFile);
+				if(f_close(&WriteFile) != FR_OK)
+				{
+					aewin_dbg("f_close failed.\r\n");
+				}
 				aewin_dbg("Reading flash data finished.\r\n");
 			}
 

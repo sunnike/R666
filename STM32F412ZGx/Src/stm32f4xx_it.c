@@ -39,6 +39,9 @@
 #include "main.h"
 
 volatile unsigned char time_states;
+
+volatile unsigned char timeout_counter = 0;
+unsigned char timeout_counter_switch = 0;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -227,6 +230,9 @@ void TIM3_IRQHandler(void)
 		time_states |= flag_1s;
 		/* Clear timer count. */
 		timer_cnt = 0;
+
+		//usb timeout counter
+		timeout_counter++;
 	}
 
 	if(!(timer_cnt % 5)){

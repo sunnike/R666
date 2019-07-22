@@ -105,6 +105,10 @@ extern volatile unsigned char time_states;
 RTC_TimeTypeDef RTC_Time;
 RTC_DateTypeDef RTC_Date;
 
+extern volatile unsigned char timeout_counter;
+extern unsigned char timeout_counter_switch;
+
+extern USBH_HandleTypeDef hUsbHostFS;
 
 #if AEWIN_DBUG
 char dbg_buff[PRINT_BUFF];
@@ -244,9 +248,11 @@ int main(void)
 		// print RTC time
 		HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
 		HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
-		//aewin_dbg("RTC Date: 20%02x.%02x.%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date);
-		//aewin_dbg("RTC Time: %02x:%02x:%02x\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
-		//aewin_dbg("--------------------\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+		aewin_dbg("RTC : 20%02x.%02x.%02x  -   %02x:%02x:%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+		aewin_dbg("Appli_state : %d\r\n", Appli_state);
+		aewin_dbg("gState      : %d\r\n",(&hUsbHostFS)->gState);
+		aewin_dbg("EnumState   : %d\r\n", (&hUsbHostFS)->EnumState);
+		aewin_dbg("--------------------\r\n");
 
 	}
 
@@ -270,7 +276,11 @@ int main(void)
     {
     	if(Appli_state == APPLICATION_READY)
 		{
-			// check if FPGA is not busy - verify fpga_busy_status value
+    		// reset timeout_counter
+    		timeout_counter = 0;
+    		timeout_counter_switch = 0;
+
+    		// check if FPGA is not busy - verify fpga_busy_status value
 			if( (fpga_busy_status[0] == 0) && (fpga_busy_status[1] == 0) )
 			{
 				usb_read_flag = 1;
@@ -333,7 +343,7 @@ int main(void)
 							// de-select target flash
 							fpga_spi_mode = FLASH_NONE;
 							i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
-							aewin_dbg("Select flash %d for reading.\r\n", fpga_spi_mode);
+							aewin_dbg("Select flash back to 0.\r\n", fpga_spi_mode);
 						}
 
 						break;
@@ -390,7 +400,7 @@ int main(void)
 						// de-select target flash
 						fpga_spi_mode = FLASH_NONE;
 						i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
-						aewin_dbg("Select flash %d for reading.\r\n", fpga_spi_mode);
+						aewin_dbg("Select flash back to 0.\r\n", fpga_spi_mode);
 
 						break;
 
@@ -426,7 +436,7 @@ int main(void)
 						// de-select target flash
 						fpga_spi_mode = FLASH_NONE;
 						i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
-						aewin_dbg("Select flash %d for reading.\r\n", fpga_spi_mode);
+						aewin_dbg("Select flash back to 0.\r\n", fpga_spi_mode);
 
 						break;
 
@@ -458,6 +468,33 @@ int main(void)
 				// [note] - print error massage
 			}
 		}
+    	else
+    	{
+    		//[Note]
+			// add start timer
+			if(timeout_counter_switch == 1)
+			{
+				// add timeout handler, usb re-init and init
+				//aewin_dbg("USB timeout_counter: %d! \r\n", timeout_counter);
+				if(timeout_counter > USB_TIMEOUT_LIMIT)
+				{
+					aewin_dbg("USB timeout! Reset USB_HOST.\r\n");
+					//HAL_TIM_Base_Stop_IT(&htim3);
+					//MX_USB_HOST_Init();
+					//MX_FATFS_Init();
+					//NVIC_SystemReset();
+					//USBH_LL_DeInit(&hUsbHostFS);
+					//USBH_LL_Init(&hUsbHostFS);
+					USBH_ReEnumerate(&hUsbHostFS);
+					//HAL_TIM_Base_Start_IT(&htim3);
+					aewin_dbg("Reset USB_HOST finished.\r\n");
+
+					// reset timeout counter
+					timeout_counter_switch = 0;
+					timeout_counter = 0;
+				}
+			}
+    	}
     }
     else if(Appli_state == APPLICATION_DISCONNECT)
 	{
@@ -465,6 +502,10 @@ int main(void)
     	if(usb_read_flag == 1)
 		{
 			usb_read_flag = 0;
+
+			// reset timeout counter
+			timeout_counter_switch = 0;
+			timeout_counter = 0;
 		}
 	}
 

@@ -95,6 +95,8 @@ typedef enum{
   USB_EXE_ERROR_REPORT         /*!< Specifies the operation for generate a error report. */
 }eUSB_Cmds;
 
+#define USB_TIMEOUT_LIMIT  3   //uint: second
+
 // --------------------------------
 // Error Code
 // --------------------------------
