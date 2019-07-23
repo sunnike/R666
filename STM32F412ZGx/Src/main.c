@@ -88,6 +88,8 @@ uint8_t fpga_info[FPGA_INFO_SIZE];
 uint8_t fpga_busy_status[FPGA_BUSY_STATUS_SIZE];
 uint16_t fpga_fsmc_rxbuffer[5];
 
+uint8_t fpga_timer_switch = FPGA_TIMER_DISABLE;
+
 // USB variables
 uint8_t usb_read_flag = 0;
 uint8_t usb_cmd_code = USB_CMD_NONE;
@@ -174,46 +176,66 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-
-  aewin_dbg("================\r\n");
-  aewin_dbg("  R666 booting  \r\n");
-  aewin_dbg("================\r\n");
-
-
-  // print booting date and time
-  HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
-  HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
-  aewin_dbg("RTC Date: 20%02x.%02x.%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date);
-  aewin_dbg("RTC Time: %02x:%02x:%02x\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
-  aewin_dbg("--------------------\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+	aewin_dbg("================\r\n");
+	aewin_dbg("  R666 booting  \r\n");
+	aewin_dbg("================\r\n");
 
 
-  aewin_dbg("Unlock FPGA.\r\n");
-  //--------------------------------
-  // Unlock FPGA key
-  i2c2_fpga_write(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key);
+	// print booting date and time
+	HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
+	HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
+	aewin_dbg("RTC : 20%02x.%02x.%02x - %02x:%02x:%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+	aewin_dbg("--------------------\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
 
-  // Read FPGA key
-  i2c2_fpga_read(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key_readback);
 
-  aewin_dbg("Read FPGA information.\r\n");
-  // Read FPGA information - version and time
-  i2c2_fpga_read(FPGA_INFO_BASE_ADDR, FPGA_INFO_SIZE, (uint8_t*)fpga_info);
-  aewin_dbg("FPGA version: %d.%d.%d\r\n", fpga_info[0], fpga_info[1], fpga_info[2]);
-  aewin_dbg("FPGA build date: 20%02d.%02d.%02d\r\n", fpga_info[5], fpga_info[4], fpga_info[3]);
+	aewin_dbg("Unlock FPGA.\r\n");
+	//--------------------------------
+	// Unlock FPGA key
+	i2c2_fpga_write(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key);
 
-  // Read FPGA Busy byte and status1 byte
-  i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
-  aewin_dbg("FPGA busy bit: %x\r\n", fpga_busy_status[4]);
-  aewin_dbg("FPGA busy status: %x %x %x\r\n", fpga_busy_status[7], fpga_busy_status[6], fpga_busy_status[5]);
+	// Read FPGA key
+	i2c2_fpga_read(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key_readback);
 
-  // check FPGA information. If all byte are abnormal, output error code
-  if((fpga_info[5] == FPGA_DEFULT_RETURN_VALUE) && (fpga_info[6] == FPGA_DEFULT_RETURN_VALUE) && (fpga_info[7] == FPGA_DEFULT_RETURN_VALUE))
-  {
+	aewin_dbg("Read FPGA information.\r\n");
+	// Read FPGA information - version and time
+	i2c2_fpga_read(FPGA_INFO_BASE_ADDR, FPGA_INFO_SIZE, (uint8_t*)fpga_info);
+	aewin_dbg("FPGA version    : %d.%d.%d\r\n", fpga_info[0], fpga_info[1], fpga_info[2]);
+	aewin_dbg("FPGA build date : 20%02d.%02d.%02d\r\n", fpga_info[5], fpga_info[4], fpga_info[3]);
+
+	// Read FPGA Busy byte and status1 byte
+	i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
+	aewin_dbg("FPGA busy bit   : %x\r\n", fpga_busy_status[4]);
+	aewin_dbg("FPGA busy status: %x %x %x\r\n", fpga_busy_status[7], fpga_busy_status[6], fpga_busy_status[5]);
+
+	// check FPGA information. If all byte are abnormal, output error code
+	if((fpga_info[5] == FPGA_DEFULT_RETURN_VALUE) && (fpga_info[6] == FPGA_DEFULT_RETURN_VALUE) && (fpga_info[7] == FPGA_DEFULT_RETURN_VALUE))
+	{
 	// user can not distinguish this is I2C2 failed or FPGA unlock failed.
 	usb_err_code = USB_FPGA_RW_FAILED;
-    aewin_dbg("Access FPGA failed.\r\n");
-  }
+	aewin_dbg("Access FPGA failed.\r\n");
+	}
+
+	//--------------------------------
+	// set RTC time to FPGA
+	// enable FPGA SPI
+	fpga_timer_switch = FPGA_TIMER_ENABLE;
+	i2c2_fpga_write(FPGA_TIMER_SWITCH_ADDR, FPGA_TIMER_SWITCH_SIZE, &(fpga_timer_switch));
+	aewin_dbg("Enable FPGA timer.\r\n");
+
+	// write MCU RTC time to FPGA
+	aewin_dbg("Set RTC time to FPGA timer.\r\n");
+	i2c2_fpga_write(FPGA_TIMER_BASE_ADDR + 0, 1, &(RTC_Time.Seconds));
+	i2c2_fpga_write(FPGA_TIMER_BASE_ADDR + 1, 1, &(RTC_Time.Minutes));
+	i2c2_fpga_write(FPGA_TIMER_BASE_ADDR + 2, 1, &(RTC_Time.Hours));
+	i2c2_fpga_write(FPGA_TIMER_BASE_ADDR + 3, 1, &(RTC_Date.Date));
+	i2c2_fpga_write(FPGA_TIMER_BASE_ADDR + 4, 1, &(RTC_Date.Month));
+	i2c2_fpga_write(FPGA_TIMER_BASE_ADDR + 5, 1, &(RTC_Date.Year));
+
+	// enable FPGA SPI
+	fpga_timer_switch = FPGA_TIMER_DISABLE;
+	i2c2_fpga_write(FPGA_TIMER_SWITCH_ADDR, FPGA_TIMER_SWITCH_SIZE, &(fpga_timer_switch));
+	aewin_dbg("Disable FPGA timer.\r\n");
+
   //--------------------------------
 
   /*Start the TIM Base generation in interrupt mode ####################*/
@@ -248,18 +270,17 @@ int main(void)
 		// print RTC time
 		HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
 		HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
-		aewin_dbg("RTC : 20%02x.%02x.%02x  -   %02x:%02x:%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+		aewin_dbg("RTC : 20%02x.%02x.%02x - %02x:%02x:%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
 		aewin_dbg("Appli_state : %d\r\n", Appli_state);
 		aewin_dbg("gState      : %d\r\n",(&hUsbHostFS)->gState);
 		aewin_dbg("EnumState   : %d\r\n", (&hUsbHostFS)->EnumState);
-		aewin_dbg("--------------------\r\n");
+		aewin_dbg("----------------------------\r\n");
 
 	}
 
 	/*================== 500ms Routine ================== */
 	if (time_states & flag_500ms){
 		time_states &= ~flag_500ms; // Clear flag.
-
 	}
 
 	/*================== 500ms Routine ================== */
@@ -317,6 +338,7 @@ int main(void)
 								aewin_dbg("Enable FPGA SPI.\r\n");
 
 								// read flash
+								usb_cmd_flash_num = FLASH_BIOS_BACKUP;
 								USB_MSC_File_Operations(USB_CMD_READ_FLASH);
 							}
 							if(backup_flag[BACKUP_FLAG_BMC] == 1)
@@ -332,6 +354,7 @@ int main(void)
 								aewin_dbg("Enable FPGA SPI.\r\n");
 
 								// read flash
+								usb_cmd_flash_num = FLASH_BMC_BACKUP;
 								USB_MSC_File_Operations(USB_CMD_READ_FLASH);
 							}
 
@@ -350,7 +373,7 @@ int main(void)
 
 					case USB_CMD_UPDATE_IMA:
 						aewin_dbg("Get command: Update flash.\r\n");
-						aewin_dbg("ima file name: %s.\r\n", usb_cmd_ima_filename);
+						aewin_dbg("ima file name: %s\r\n", usb_cmd_ima_filename);
 
 						// check flash number
 						if(fpga_spi_mode > FLASH_NUM)
@@ -482,7 +505,7 @@ int main(void)
 					//HAL_TIM_Base_Stop_IT(&htim3);
 					//MX_USB_HOST_Init();
 					//MX_FATFS_Init();
-					//NVIC_SystemReset();
+					NVIC_SystemReset();
 					//USBH_LL_DeInit(&hUsbHostFS);
 					//USBH_LL_Init(&hUsbHostFS);
 					USBH_ReEnumerate(&hUsbHostFS);

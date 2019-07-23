@@ -115,9 +115,10 @@ typedef enum{
 // --------------------------------
 // IMA File Information
 // --------------------------------
-#define IMA_FILE_SIZE          32*1024*1024  // 32MB
-#define IMA_FILENAME_LEN_LIMIT 30
-#define IMA_FILE_PATH_HEAD_LEN 2             // 0:
+#define IMA_FILE_SIZE               32*1024*1024  // 32MB
+#define IMA_FILENAME_LEN_LIMIT      30
+#define IMA_FILE_PATH_HEAD_LEN       2            // 0:
+#define IMA_FILE_ATTACHMENT_NAME_LEN 4            //.ima
 
 #define IMA_FILE_NONE          0             // user didn't give ima file name
 #define IMA_FILE_TAG           0x5A
@@ -139,23 +140,31 @@ typedef enum{
 // --------------------------------
 // FPGA Information
 // --------------------------------
-#define FPGA_KEY_SIZE         8
-#define FPGA_INFO_SIZE        6
-#define FPGA_SPI_SWITCH_SIZE  1
-#define FPGA_SPI_MODE_SIZE    1
-#define FPGA_BUSY_STATUS_SIZE 4
+#define FPGA_KEY_SIZE          8
+#define FPGA_INFO_SIZE         6
+#define FPGA_SPI_SWITCH_SIZE   1
+#define FPGA_SPI_MODE_SIZE     1
+#define FPGA_BUSY_STATUS_SIZE  4
+#define FPGA_TIMER_SWITCH_SIZE 1
+#define FPGA_TIMER_SIZE        6
 
 #define FPGA_KEY_BASE_ADDR         0x00
 #define FPGA_INFO_BASE_ADDR        0x08
 #define FPGA_SPI_SWITCH_ADDR       0x10
 #define FPGA_SPI_MODE_ADDR         0x11
 #define FPGA_BUSY_STATUS_BASE_ADDR 0x14
+#define FPGA_TIMER_SWITCH_ADDR     0x18
+#define FPGA_TIMER_BASE_ADDR       0x19
 
 #define FPGA_DEFULT_RETURN_VALUE   0xFF     // if FPGA unlock failed, all command will get the same return value
 
 // fpga - SPI EN
 #define FPGA_SPI_SWITCH_ON   1
 #define FPGA_SPI_SWITCH_OFF  0
+
+//fpga - timer EN
+#define FPGA_TIMER_ENABLE    1
+#define FPGA_TIMER_DISABLE   0
 
 #define FPGA_DATA_BYTE_SIZE  2    // read 16bit at 1 time
 #define FPGA_DATA_NUM        32
@@ -181,10 +190,13 @@ typedef enum{
 #define FPGA_LOG_STATE_DONE 0x01
 #define FPGA_LOG_OK         0x01
 #define FPGA_LOG_RE         0x02
+#define FPGA_LOG_BKRE       0x03
+#define FPGA_LOG_BKREF      0X04
 
 
 
 #define FPGA_FSMC_BASE_ADDR  0x60000000
+#define FPGA_FSMC_TIME_ADDR  (FPGA_FSMC_BASE_ADDR + 4*4)
 #define FPGA_FSMC_LOG_ADDR   (FPGA_FSMC_BASE_ADDR + FPGA_DATA_SKIP_NUM*4)
 
 

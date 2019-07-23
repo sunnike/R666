@@ -78,6 +78,10 @@ const uint8_t usb_rtext_file_ima_name[] = "ima_file";
 const uint8_t usb_rtext_file_re_read_flash[] = "re_read_flash:";
 const uint8_t usb_wtext_error_msg[] = "error code:";
 
+//uint8_t usb_read_flash_filename[IMA_FILE_PATH_HEAD_LEN + 10 + 1 + IMA_FILE_ATTACHMENT_NAME_LEN] = "0:flash_data";
+//uint8_t usb_ima_attachment_name[]=".ima";
+uint8_t usb_read_flash_filename[IMA_FILE_PATH_HEAD_LEN + IMA_FILE_ATTACHMENT_NAME_LEN + 12] = "0:flash_data_0.ima";
+
 uint8_t usb_rtext_buffer[sizeof(usb_rtext_file_ima_name)+IMA_FILENAME_LEN_LIMIT];
 
 uint32_t loop_index;
@@ -701,11 +705,11 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						{
 							//backup_flag[0] = fpga_log[FPGA_LOG_BIOS];
 							//backup_flag[1] = fpga_log[FPGA_LOG_BMC];
-							if(fpga_log[FPGA_LOG_BIOS] == FPGA_LOG_RE)
+							if(fpga_log[FPGA_LOG_BIOS] == FPGA_LOG_BKRE)
 							{
 								backup_flag[BACKUP_FLAG_BIOS] = RE_READ_FLASH_ON;
 							}
-							if(fpga_log[FPGA_LOG_BMC] == FPGA_LOG_RE)
+							if(fpga_log[FPGA_LOG_BMC] == FPGA_LOG_BKRE)
 							{
 								backup_flag[BACKUP_FLAG_BMC] = RE_READ_FLASH_ON;
 							}
@@ -729,6 +733,14 @@ void USB_MSC_File_Operations(unsigned char command_type)
 									else if(fpga_log[fpga_log_index] == FPGA_LOG_RE)
 									{
 										sprintf(fpga_log_str,"%6s ","RE");
+									}
+									else if(fpga_log[fpga_log_index] == FPGA_LOG_BKRE)
+									{
+										sprintf(fpga_log_str,"%6s ","BKRE");
+									}
+									else if(fpga_log[fpga_log_index] == FPGA_LOG_BKREF)
+									{
+										sprintf(fpga_log_str,"%6s ","BKREF");
 									}
 									else
 									{
@@ -875,13 +887,13 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			aewin_dbg("Programming finished!.\r\n");
 
 			// [debug]
-			// read and print flash 5 pages to UART2
+			// read and print flash 2 pages to UART2
 			HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
 
 			if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
 			{
 				//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
-				for(loop_index = 0; loop_index < 5; loop_index++) //test
+				for(loop_index = 0; loop_index < 2; loop_index++) //test
 				{
 					if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
 					{
@@ -994,6 +1006,8 @@ void USB_MSC_File_Operations(unsigned char command_type)
 				}
 				aewin_dbg("Get RE read flash setting: %d\r\n", usb_cmd_re_read_flash);
 
+				aewin_dbg("++++++++++++++++++++++++++++\r\n");
+
 				// [debug]
 				//f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer),&MyFile);
 				if(f_close(&MyFile) != FR_OK)
@@ -1022,7 +1036,12 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			break;
 
 		case USB_CMD_READ_FLASH:
-			if(f_open(&WriteFile, "0:flash_data.ima", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+			// setting file name of output data
+			usb_read_flash_filename[13] = usb_cmd_flash_num + '0';
+			aewin_dbg("Output file: %s\r\n", usb_read_flash_filename);
+
+			//if(f_open(&WriteFile, "0:flash_data.ima", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+			if(f_open(&WriteFile, usb_read_flash_filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				aewin_dbg("Create flash_data.txt failed.\r\n");
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
@@ -1041,7 +1060,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
 						{
 							// [note]
-							// add spi failed?
+							aewin_dbg("Start reading flash data.\r\n");
 							break;
 						}
 
