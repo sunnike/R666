@@ -78,8 +78,7 @@
 // --------------------------------
 #define VER_MAJOR 0
 #define VER_MINOR 0
-#define VER_PATCH 0
-
+#define VER_PATCH 1
 
 // --------------------------------
 // USB Information
@@ -89,7 +88,6 @@ typedef enum{
   USB_CMD_READ_LOG     = 0x01, /*!< Specifies the command for read log and save to USB disk. */
   USB_CMD_UPDATE_IMA   = 0x02, /*!< Specifies the command for update flash with .ima file in USB disk. */
   USB_CMD_READ_FLASH,          /*!< Specifies the command for read flash. */
-  USB_CMD_ERASE_FLASH,         /*!< Specifies the command for erase flash. */
   USB_CMD_TEST_RW,             /*!< Specifies the command for function test, write and read a .txt file. */
   USB_EXE_READ_CMD     = 0xE1, /*!< Specifies the operation for read user command. */
   USB_EXE_ERROR_REPORT         /*!< Specifies the operation for generate a error report. */
@@ -108,8 +106,6 @@ typedef enum{
   USB_FPGA_RW_FAILED,            /*!< Read/write FPGA failed. */
   USB_ERR_IMA_NOT_EXIST,         /*!< .ima file is not in the USB disk. */
   USB_ERR_FLASH_NOT_EXIST,       /*!< Specifies flash number is not exist. */
-  USB_ERR_FLASH_UPDATE_FAILED,   /*!< Flash update failed. */
-  USB_ERR_LOG_RW_FAILED          /*!< Read/Write log failed. */
 }eUSB_ErrorCodes;
 
 // --------------------------------
@@ -204,7 +200,7 @@ typedef enum{
 // FLASH Information
 // --------------------------------
 #define FLASH_NUM            4
-#define FLASH_NONE           0 // user didn't give flash number
+#define FLASH_NONE           0
 #define FLASH_BIOS           1
 #define FLASH_BIOS_BACKUP    2
 #define FLASH_BMC            3
@@ -213,7 +209,7 @@ typedef enum{
 // --------------------------------
 // SPI Information
 // --------------------------------
-#define SPI_READ_BUFFER_SIZE  256           // advice 256byte, test 1024 byte
+#define SPI_READ_BUFFER_SIZE  512           // advice 256byte, test 1024 byte
 #define SPI_WRITE_BUFFER_SIZE 256           // advice 256byte, test 2048 byte
 #define SPI_READ_LOOP_LIMIT   IMA_FILE_SIZE/SPI_READ_BUFFER_SIZE
 //#define SPI_WRITE_LOOP_LIMIT  IMA_FILE_SIZE/SPI_WRITE_BUFFER_SIZE
@@ -271,6 +267,7 @@ void flash_erase(void);
 void aewin_dbg(char *fmt,...);
 void i2c2_fpga_write(char base_addr, char data_len, char *pData);
 void i2c2_fpga_read(char base_addr, char data_len, char *pData);
+unsigned char bcd2bin_byte(unsigned char bcd_num);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

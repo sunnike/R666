@@ -883,7 +883,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
 			{
 				//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
-				for(loop_index = 0; loop_index < 2; loop_index++) //test
+				//for(loop_index = 0; loop_index < 2; loop_index++) //test
 				{
 					if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
 					{
@@ -891,7 +891,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					}
 
 					//print flash data to uart2
-					aewin_dbg("\r\nPage %d ", loop_index);
+					//aewin_dbg("\r\nPage %d ", loop_index);
 					for(page_data_index = 0; page_data_index < sizeof(flash_data_read); page_data_index++)
 					{
 						if(page_data_index % 16 == 0)
