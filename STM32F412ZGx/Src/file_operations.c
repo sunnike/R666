@@ -57,6 +57,8 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
+uint32_t loop_index;
+
 // ---------------
 // file read/write
 //----------------
@@ -69,49 +71,22 @@ FRESULT res_write, res_read;
 uint16_t bytesread;
 uint32_t bytesWritten;
 
-uint8_t rtext[SPI_WRITE_BUFFER_SIZE];
-const uint8_t wtext[] = "USB Host Library : Mass Storage Example";
+uint8_t rtext[SPI_WRITE_BUFFER_SIZE];  // receive buffer of SPI, for reading flash data
 
+//---------------
+// USB variables
+//---------------
 const uint8_t usb_rtext_file_cmd[] = "command:";
 const uint8_t usb_rtext_file_flash_num[] = "flash_number:";
 const uint8_t usb_rtext_file_ima_name[] = "ima_file";
 const uint8_t usb_rtext_file_re_read_flash[] = "re_read_flash:";
 const uint8_t usb_wtext_error_msg[] = "error code:";
 
-//uint8_t usb_read_flash_filename[IMA_FILE_PATH_HEAD_LEN + 10 + 1 + IMA_FILE_ATTACHMENT_NAME_LEN] = "0:flash_data";
-//uint8_t usb_ima_attachment_name[]=".ima";
-uint8_t usb_read_flash_filename[IMA_FILE_PATH_HEAD_LEN + IMA_FILE_ATTACHMENT_NAME_LEN + 12] = "0:flash_data_0.ima";
-
-uint8_t usb_rtext_buffer[sizeof(usb_rtext_file_ima_name)+IMA_FILENAME_LEN_LIMIT];
-
-uint32_t loop_index;
-
-// ---------------
-// flash variables
-//----------------
-uint8_t flash_cmd_program[] = {FLASH_CMD_PAGE_PROGRAM, 0x00, 0x00, 0x00, 0x00};
-const uint8_t flash_cmd_read[] = {FLASH_CMD_READ, 0x00, 0x00, 0x00, 0x00};             // fast read data: {command, ADD1, ADD2, ADD3, Dummy}
-const uint8_t flash_cmd_write_status[] = {FLASH_CMD_WRITE_STATUS, 0x00};
-const uint8_t flash_cmd_read_status[] = {FLASH_CMD_READ_STATUS};
-const uint8_t flash_cmd_write_enable[] = {FLASH_CMD_WRITE_ENABLE};
-const uint8_t flash_cmd_clear_flag[] = {FLASH_CMD_CLEAR_FLAG};
-const uint8_t flash_cmd_bulk_erase[] = {FLASH_CMD_BULK_ERASE};
-
-uint8_t flash_data_read[SPI_READ_BUFFER_SIZE];
-volatile uint8_t flash_data_read_byte[1];
-
-uint32_t flash_program_address = 0;
-
-//uint8_t flash_data_str[FLASH_DATA_BYTE + FLASH_SPACE_BYTE];
-
-//---------------
-// USB variables
-//---------------
-const uint8_t usb_file_name[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:USBHost_RWtest.txt";
 const uint8_t usb_aewin_file_name[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:aewin_file.txt";
-
+uint8_t usb_read_flash_filename[IMA_FILE_PATH_HEAD_LEN + IMA_FILE_ATTACHMENT_NAME_LEN + 12] = "0:flash_data_0.ima";
 uint8_t usb_ima_file_path[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:";
 
+uint8_t usb_rtext_buffer[sizeof(usb_rtext_file_ima_name)+IMA_FILENAME_LEN_LIMIT];
 uint8_t usb_write_str[FLASH_WRITE_ROW_NUM*( (FLASH_DATA_BYTE + FLASH_SPACE_BYTE) * FLASH_ROW_DATA_LIMIT + 1)];
 
 extern uint8_t usb_err_code;
@@ -121,18 +96,36 @@ extern uint8_t usb_cmd_ima_filename[IMA_FILENAME_LEN_LIMIT];
 extern uint8_t usb_cmd_re_read_flash;
 extern uint8_t backup_flag[2];
 
+// ---------------
+// flash variables
+//----------------
+// flash command
+const uint8_t flash_cmd_read[] = {FLASH_CMD_READ, 0x00, 0x00, 0x00, 0x00};             // fast read data: {command, ADD1, ADD2, ADD3, Dummy}
+const uint8_t flash_cmd_write_status[] = {FLASH_CMD_WRITE_STATUS, 0x00};
+const uint8_t flash_cmd_read_status[] = {FLASH_CMD_READ_STATUS};
+const uint8_t flash_cmd_write_enable[] = {FLASH_CMD_WRITE_ENABLE};
+const uint8_t flash_cmd_clear_flag[] = {FLASH_CMD_CLEAR_FLAG};
+const uint8_t flash_cmd_bulk_erase[] = {FLASH_CMD_BULK_ERASE};
+
+uint8_t flash_cmd_program[] = {FLASH_CMD_PAGE_PROGRAM, 0x00, 0x00, 0x00, 0x00};
+uint32_t flash_program_address = 0;
+
+// flash read buffer
+uint8_t flash_data_read[SPI_READ_BUFFER_SIZE];
+volatile uint8_t flash_data_read_byte[1];
+
 //---------------
 // FPGA variables
 //---------------
-uint32_t *fpga_log_addr;
-uint16_t fpga_log_16bit;
-uint8_t fpga_log_str[14];
-uint8_t fpga_log_num;
-uint8_t fpga_log[FPGA_LOG_SIZE];
-uint8_t fpga_log_index;
-uint8_t fpga_last_log = 0;
+uint32_t *fpga_log_addr;           // point to FSMC address
+uint16_t fpga_log_16bit;           // put the data which is read from fpga_log_addr
+uint8_t fpga_log_str[14];          // the read data will be put at this string temporarily, and write into an opened file
+uint8_t fpga_log_num;              // number of fpga log, range: 1 ~ 30
+uint8_t fpga_log[FPGA_LOG_SIZE];   // one row of fpga log
+uint8_t fpga_log_index;            // index of one row fpga log
+uint8_t fpga_last_log = 0;         // record the last log of fpga log
 
-extern uint8_t fpga_info[FPGA_INFO_SIZE];;
+extern uint8_t fpga_info[FPGA_INFO_SIZE];
 
 //---------------
 // RTC variables
@@ -140,12 +133,9 @@ extern uint8_t fpga_info[FPGA_INFO_SIZE];;
 extern RTC_TimeTypeDef RTC_Time;
 extern RTC_DateTypeDef RTC_Date;
 
-//---------------
-// Other variables
-//---------------
-uint8_t sprintf_offset = 0;
-
 //debug
+const uint8_t wtext[] = "USB Host Library : Mass Storage Example";
+const uint8_t usb_file_name[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:USBHost_RWtest.txt";
 uint8_t flag_RWfailed = 0;
 uint8_t flash_test_data[SPI_READ_BUFFER_SIZE];
 
@@ -689,10 +679,9 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					fpga_log[(loop_index % 4) * 2 + 0] = (fpga_log_16bit&0xFF);
 					fpga_log[(loop_index % 4) * 2 + 1] = ((fpga_log_16bit & 0xFF00)>>8);
 
-
 					if(loop_index % 4 == 0)
 					{
-						// print log number
+						// wrap new line and print log number
 						fpga_log_num++;
 						sprintf(fpga_log_str,"%3d ",fpga_log_num);
 						res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
@@ -700,9 +689,10 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					}
 					else if(loop_index % 4 == 3)
 					{
-						// check fpga last log, if RE happened, set flag for mark which flash should be read to USB disk
+						// end of one row fpga log, check if this is the last log
 						if( ((loop_index + 1) / 4) == fpga_last_log)
 						{
+							//if BKRE happened, set flag for mark which flash should be read to USB disk
 							//backup_flag[0] = fpga_log[FPGA_LOG_BIOS];
 							//backup_flag[1] = fpga_log[FPGA_LOG_BMC];
 							if(fpga_log[FPGA_LOG_BIOS] == FPGA_LOG_BKRE)
@@ -838,6 +828,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			}
 			else
 			{
+				// open .ima file success, start programming flash until EOF or error occur
 				do
 				{
 					// read 1-page data from .ima file
@@ -889,7 +880,6 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			// [debug]
 			// read and print flash 2 pages to UART2
 			HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-
 			if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
 			{
 				//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
@@ -900,7 +890,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						break;
 					}
 
-					//print to uart2
+					//print flash data to uart2
 					aewin_dbg("\r\nPage %d ", loop_index);
 					for(page_data_index = 0; page_data_index < sizeof(flash_data_read); page_data_index++)
 					{
@@ -912,18 +902,11 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					}
 				}
 			}
-
 			HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
 			break;
 
 		case USB_EXE_READ_CMD:
-			//res = f_mount(&USBHFatFS, "0:", 1);
-
-			//if(res != FR_OK)
-			//{
-			//	aewin_dbg("USB mount failed: %d\r\n");
-			//}
 
 			if(f_open(&MyFile, usb_aewin_file_name, FA_READ) != FR_OK)
 			{
@@ -960,7 +943,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 				}
 				aewin_dbg("Get USB flash number: %d\r\n", usb_cmd_flash_num);
 
-				// check ima file name
+				// check ima file name format
 				f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer),&MyFile);
 				usb_cmd_ima_filename[0] = IMA_FILE_TAG;
 				for(loop_index = 0; loop_index < sizeof(usb_rtext_file_ima_name)-1 ; loop_index++)
@@ -973,6 +956,10 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					}
 				}
 
+				// get .ima file name
+				memset(usb_ima_file_path , '\0', sizeof(usb_ima_file_path ));
+				usb_ima_file_path[0] = '0';
+				usb_ima_file_path[1] = ':';
 				if(usb_cmd_ima_filename[0] != IMA_FILE_NONE)
 				{
 					for(loop_index = 0; loop_index < IMA_FILENAME_LEN_LIMIT; loop_index++)
@@ -1006,14 +993,12 @@ void USB_MSC_File_Operations(unsigned char command_type)
 				}
 				aewin_dbg("Get RE read flash setting: %d\r\n", usb_cmd_re_read_flash);
 
-				aewin_dbg("++++++++++++++++++++++++++++\r\n");
-
-				// [debug]
-				//f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer),&MyFile);
 				if(f_close(&MyFile) != FR_OK)
 				{
 					aewin_dbg("f_close failed.\r\n");
 				}
+
+				aewin_dbg("++++++++++++++++++++++++++++\r\n");
 			}
 			break;
 
@@ -1036,11 +1021,10 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			break;
 
 		case USB_CMD_READ_FLASH:
-			// setting file name of output data
+			// setting file name of output data according to the flash number
 			usb_read_flash_filename[13] = usb_cmd_flash_num + '0';
 			aewin_dbg("Output file: %s\r\n", usb_read_flash_filename);
 
-			//if(f_open(&WriteFile, "0:flash_data.ima", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			if(f_open(&WriteFile, usb_read_flash_filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				aewin_dbg("Create flash_data.txt failed.\r\n");
@@ -1050,17 +1034,13 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			{
 				aewin_dbg("Start reading flash data.\r\n");
 				HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-
 				if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
 				{
-					//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
-					//for(loop_index = 0; loop_index < (4*32); loop_index++)
 					for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
 					{
 						if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
 						{
-							// [note]
-							aewin_dbg("Start reading flash data.\r\n");
+							aewin_dbg("Receive flash data failed.\r\n");
 							break;
 						}
 
@@ -1115,7 +1095,6 @@ void USB_MSC_File_Operations(unsigned char command_type)
 
 					}
 				}
-
 				HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
 				if(f_close(&WriteFile) != FR_OK)

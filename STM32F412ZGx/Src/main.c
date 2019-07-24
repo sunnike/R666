@@ -72,13 +72,11 @@
 
 /* Private variables ---------------------------------------------------------*/
 extern ApplicationTypeDef Appli_state;
+extern volatile unsigned char time_states;
 
-// test variables
-//uint8_t flag_test_write = 0;
-//uint8_t fpga_key_write_buffer[2];
-//uint8_t fpga_key_read_buffer[1];
-
+//---------------
 // FPGA variables
+//---------------
 const uint8_t fpga_key[FPGA_KEY_SIZE] = {'A','E','W','I','N','1','6','8'};
 
 uint8_t fpga_spi_switch = FPGA_SPI_SWITCH_OFF;
@@ -86,31 +84,38 @@ uint8_t fpga_spi_mode = FLASH_NONE;
 uint8_t fpga_key_readback[FPGA_KEY_SIZE];
 uint8_t fpga_info[FPGA_INFO_SIZE];
 uint8_t fpga_busy_status[FPGA_BUSY_STATUS_SIZE];
-uint16_t fpga_fsmc_rxbuffer[5];
-
 uint8_t fpga_timer_switch = FPGA_TIMER_DISABLE;
 
+//---------------
 // USB variables
-uint8_t usb_read_flag = 0;
-uint8_t usb_cmd_code = USB_CMD_NONE;
-uint8_t usb_err_code = USB_ERR_NONE;
+//---------------
+uint8_t usb_read_flag = 0;    // flag to mark whether or not USB disk has been read
 
+// information read from aewin_file.txt
+uint8_t usb_cmd_code = USB_CMD_NONE;
 uint8_t usb_cmd_flash_num = FLASH_NONE;
 uint8_t usb_cmd_ima_filename[IMA_FILENAME_LEN_LIMIT];
-
 uint8_t usb_cmd_re_read_flash = RE_READ_FLASH_OFF;
+
+uint8_t usb_err_code = USB_ERR_NONE;
+
 uint8_t backup_flag[2] = {RE_READ_FLASH_OFF, RE_READ_FLASH_OFF};
 
-// time variables
-extern volatile unsigned char time_states;
-
-RTC_TimeTypeDef RTC_Time;
-RTC_DateTypeDef RTC_Date;
-
+//---------------
+// USB timeout variables
+//---------------
 extern volatile unsigned char timeout_counter;
 extern unsigned char timeout_counter_switch;
 
+//---------------
+// RTC variables
+//---------------
+RTC_TimeTypeDef RTC_Time;
+RTC_DateTypeDef RTC_Date;
+
+//debug variables
 extern USBH_HandleTypeDef hUsbHostFS;
+
 
 #if AEWIN_DBUG
 char dbg_buff[PRINT_BUFF];
@@ -180,13 +185,11 @@ int main(void)
 	aewin_dbg("  R666 booting  \r\n");
 	aewin_dbg("================\r\n");
 
-
 	// print booting date and time
 	HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
 	HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
 	aewin_dbg("RTC : 20%02x.%02x.%02x - %02x:%02x:%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
 	aewin_dbg("--------------------\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
-
 
 	aewin_dbg("Unlock FPGA.\r\n");
 	//--------------------------------
@@ -210,9 +213,9 @@ int main(void)
 	// check FPGA information. If all byte are abnormal, output error code
 	if((fpga_info[5] == FPGA_DEFULT_RETURN_VALUE) && (fpga_info[6] == FPGA_DEFULT_RETURN_VALUE) && (fpga_info[7] == FPGA_DEFULT_RETURN_VALUE))
 	{
-	// user can not distinguish this is I2C2 failed or FPGA unlock failed.
-	usb_err_code = USB_FPGA_RW_FAILED;
-	aewin_dbg("Access FPGA failed.\r\n");
+		// user can not distinguish this is I2C2 failed or FPGA unlock failed.
+		usb_err_code = USB_FPGA_RW_FAILED;
+		aewin_dbg("Access FPGA failed.\r\n");
 	}
 
 	//--------------------------------
@@ -235,8 +238,7 @@ int main(void)
 	fpga_timer_switch = FPGA_TIMER_DISABLE;
 	i2c2_fpga_write(FPGA_TIMER_SWITCH_ADDR, FPGA_TIMER_SWITCH_SIZE, &(fpga_timer_switch));
 	aewin_dbg("Disable FPGA timer.\r\n");
-
-  //--------------------------------
+	//--------------------------------
 
   /*Start the TIM Base generation in interrupt mode ####################*/
     HAL_TIM_Base_Start_IT(&htim3);
@@ -275,7 +277,6 @@ int main(void)
 		aewin_dbg("gState      : %d\r\n",(&hUsbHostFS)->gState);
 		aewin_dbg("EnumState   : %d\r\n", (&hUsbHostFS)->EnumState);
 		aewin_dbg("----------------------------\r\n");
-
 	}
 
 	/*================== 500ms Routine ================== */
@@ -297,6 +298,7 @@ int main(void)
     {
     	if(Appli_state == APPLICATION_READY)
 		{
+    		//[remove]
     		// reset timeout_counter
     		timeout_counter = 0;
     		timeout_counter_switch = 0;
@@ -323,6 +325,7 @@ int main(void)
 						aewin_dbg("Get command: Read log from FPGA.\r\n");
 						USB_MSC_File_Operations(USB_CMD_READ_LOG);
 
+						// read flash data to USB disk
 						if(usb_cmd_re_read_flash == RE_READ_FLASH_ON)
 						{
 							if(backup_flag[BACKUP_FLAG_BIOS] == 1)
@@ -467,6 +470,7 @@ int main(void)
 					// below are test command
 					//------------------------------
 
+					//[remove]
 					case USB_CMD_ERASE_FLASH:
 						break;
 
@@ -508,7 +512,7 @@ int main(void)
 					NVIC_SystemReset();
 					//USBH_LL_DeInit(&hUsbHostFS);
 					//USBH_LL_Init(&hUsbHostFS);
-					USBH_ReEnumerate(&hUsbHostFS);
+					//USBH_ReEnumerate(&hUsbHostFS);
 					//HAL_TIM_Base_Start_IT(&htim3);
 					aewin_dbg("Reset USB_HOST finished.\r\n");
 
