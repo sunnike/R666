@@ -184,7 +184,7 @@ int main(void)
 	HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
 	HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
 	aewin_dbg("RTC : 20%02x.%02x.%02x - %02x:%02x:%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
-	aewin_dbg("--------------------\r\n", RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+	aewin_dbg("--------------------\r\n");
 
 	aewin_dbg("Unlock FPGA.\r\n");
 	//--------------------------------
@@ -269,7 +269,8 @@ int main(void)
 		// print RTC time
 		HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
 		HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
-		aewin_dbg("RTC : 20%02x.%02x.%02x - %02x:%02x:%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+		aewin_dbg("RTC : 20%02x.%02x.%02x - %02x:%02x:%02x\r\n", \
+				RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
 		aewin_dbg("----------------------------\r\n");
 	}
 
@@ -382,7 +383,7 @@ int main(void)
 						}
 
 						// check ima file name
-						if(usb_cmd_ima_filename[IMA_FILE_PATH_HEAD_LEN + 1] == '\0')
+						if(usb_cmd_ima_filename[FILE_PATH_HEAD_LEN + 1] == '\0')
 						{
 							aewin_dbg("The .ima file name not exist.\r\n");
 							usb_err_code = USB_ERR_IMA_NOT_EXIST;

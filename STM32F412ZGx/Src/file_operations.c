@@ -82,9 +82,15 @@ const uint8_t usb_rtext_file_ima_name[] = "ima_file";
 const uint8_t usb_rtext_file_re_read_flash[] = "re_read_flash:";
 const uint8_t usb_wtext_error_msg[] = "error code:";
 
-const uint8_t usb_aewin_file_name[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:aewin_file.txt";
-uint8_t usb_read_flash_filename[IMA_FILE_PATH_HEAD_LEN + IMA_FILE_ATTACHMENT_NAME_LEN + 12] = "0:flash_data_0.ima";
-uint8_t usb_ima_file_path[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:";
+const uint8_t usb_aewin_file_name[] = "0:aewin_file.txt";
+const uint8_t usb_flash_data_name[] = "0:flash_data";
+const uint8_t usb_log_report_name[] = "0:log_report";
+const uint8_t usb_ima_attchment_name[] = ".ima";
+const uint8_t usb_txt_attchment_name[] = ".txt";
+uint8_t usb_ima_file_path[FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:";
+uint8_t usb_read_flash_filename[sizeof(usb_flash_data_name) + FLASH_DATA_NUM_LEN + FILE_BUILD_TIME_LEN \
+								+ FILE_ATTACHMENT_NAME_LEN] = "0:flash_data_0_20190725000000.ima";
+uint8_t usb_log_report_filename[sizeof(usb_log_report_name) + FILE_BUILD_TIME_LEN + FILE_ATTACHMENT_NAME_LEN] = "0:log_report_20190725000000.txt";
 
 uint8_t usb_rtext_buffer[sizeof(usb_rtext_file_ima_name)+IMA_FILENAME_LEN_LIMIT];
 uint8_t usb_write_str[FLASH_WRITE_ROW_NUM*( (FLASH_DATA_BYTE + FLASH_SPACE_BYTE) * FLASH_ROW_DATA_LIMIT + 1)];
@@ -135,7 +141,7 @@ extern RTC_DateTypeDef RTC_Date;
 
 //debug
 const uint8_t wtext[] = "USB Host Library : Mass Storage Example";
-const uint8_t usb_file_name[IMA_FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:USBHost_RWtest.txt";
+const uint8_t usb_file_name[FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:USBHost_RWtest.txt";
 uint8_t flag_RWfailed = 0;
 uint8_t flash_test_data[SPI_READ_BUFFER_SIZE];
 
@@ -631,8 +637,13 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			*/
 
 			// save log to USB disk
+			//usb_log_report_filename
+			sprintf(usb_log_report_filename, "%s_20%02x%02x%02x%02x%02x%02x%s", usb_log_report_name, \
+					RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds, usb_txt_attchment_name);
+			aewin_dbg("Output file: %s\r\n", usb_log_report_filename);
+
 			aewin_dbg("Start saving log.\r\n");
-			if(f_open(&WriteFile, "0:log_report_format.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+			if(f_open(&WriteFile, usb_log_report_filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
 				aewin_dbg("Open log_report file failed.\r\n");
@@ -668,7 +679,8 @@ void USB_MSC_File_Operations(unsigned char command_type)
 				fpga_last_log = (fpga_log_16bit&0xFF);
 
 				// print table header
-				res= f_write (&WriteFile, "No.   BIOS    BMC   Year  Month    Day   Hour Minute  State", sizeof("No.   BIOS    BMC   Year  Month    Day   Hour Minute  State"), (void *)&bytesWritten);
+				res= f_write (&WriteFile, "No.   BIOS    BMC   Year  Month    Day   Hour Minute  State", \
+						sizeof("No.   BIOS    BMC   Year  Month    Day   Hour Minute  State"), (void *)&bytesWritten);
 
 				// print log
 				fpga_log_addr = (uint32_t *)FPGA_FSMC_LOG_ADDR;
@@ -1021,8 +1033,9 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			break;
 
 		case USB_CMD_READ_FLASH:
-			// setting file name of output data according to the flash number
-			usb_read_flash_filename[13] = usb_cmd_flash_num + '0';
+			// setting file name of output data according to the flash number and RTC
+			sprintf(usb_read_flash_filename, "%s_%d_20%02x%02x%02x%02x%02x%02x%s", usb_flash_data_name, usb_cmd_flash_num, \
+					RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds, usb_ima_attchment_name);
 			aewin_dbg("Output file: %s\r\n", usb_read_flash_filename);
 
 			if(f_open(&WriteFile, usb_read_flash_filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)

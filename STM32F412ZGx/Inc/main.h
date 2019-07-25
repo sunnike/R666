@@ -109,12 +109,15 @@ typedef enum{
 }eUSB_ErrorCodes;
 
 // --------------------------------
-// IMA File Information
+// File Information
 // --------------------------------
 #define IMA_FILE_SIZE               32*1024*1024  // 32MB
 #define IMA_FILENAME_LEN_LIMIT      30
-#define IMA_FILE_PATH_HEAD_LEN       2            // 0:
-#define IMA_FILE_ATTACHMENT_NAME_LEN 4            //.ima
+
+#define FILE_PATH_HEAD_LEN           2            // 0:
+#define FILE_BUILD_TIME_LEN          15           // _yyyymmddhhmmss
+#define FILE_ATTACHMENT_NAME_LEN     4            //.ima or .txt
+#define FLASH_DATA_NUM_LEN           2            // _0
 
 #define IMA_FILE_NONE          0             // user didn't give ima file name
 #define IMA_FILE_TAG           0x5A
