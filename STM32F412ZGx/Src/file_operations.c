@@ -145,6 +145,10 @@ const uint8_t usb_file_name[FILE_PATH_HEAD_LEN + IMA_FILENAME_LEN_LIMIT] = "0:US
 uint8_t flag_RWfailed = 0;
 uint8_t flash_test_data[SPI_READ_BUFFER_SIZE];
 
+//test
+extern char err_record;
+extern char usb_read_flag;
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -872,6 +876,13 @@ void USB_MSC_File_Operations(unsigned char command_type)
 							flash_cmd_program[3] = (flash_program_address & 0x0000FF00) >> (2*4);
 							flash_cmd_program[4] = (flash_program_address & 0x000000FF) >> (0*4);
 						}
+						else
+						{
+							// [test] SPI failed
+							aewin_dbg("SPI transmit failed.\r\n");
+							usb_read_flag = 1;
+							err_record |= (1<<MASK_ERR_SPI);
+						}
 						HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
 						// clear receive buffer
@@ -899,6 +910,10 @@ void USB_MSC_File_Operations(unsigned char command_type)
 				{
 					if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
 					{
+						// [test] SPI failed
+						aewin_dbg("SPI receive failed.\r\n");
+						usb_read_flag = 1;
+						err_record |= (1<<MASK_ERR_SPI);
 						break;
 					}
 
@@ -913,6 +928,13 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						aewin_dbg("0x%02x ", flash_data_read[page_data_index]);
 					}
 				}
+			}
+			else
+			{
+				// [test] SPI failed
+				aewin_dbg("SPI transmit failed.\r\n");
+				usb_read_flag = 1;
+				err_record |= (1<<MASK_ERR_SPI);
 			}
 			HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
@@ -1049,11 +1071,17 @@ void USB_MSC_File_Operations(unsigned char command_type)
 				HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
 				if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
 				{
-					for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
+					// [test] comment bellow because of factory test
+					//for(loop_index = 0; loop_index < SPI_READ_LOOP_LIMIT; loop_index++)
 					{
 						if(HAL_SPI_Receive(&hspi1, (uint8_t*)flash_data_read, sizeof(flash_data_read), 5000) != HAL_OK)
 						{
 							aewin_dbg("Receive flash data failed.\r\n");
+							// [test] SPI failed
+							aewin_dbg("SPI receive failed.\r\n");
+							usb_read_flag = 1;
+							err_record |= (1<<MASK_ERR_SPI);
+
 							break;
 						}
 
@@ -1107,6 +1135,13 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						res= f_write(&WriteFile, flash_data_read, sizeof(flash_data_read), (void *)&bytesWritten);
 
 					}
+				}
+				else
+				{
+					// [test] SPI failed
+					aewin_dbg("SPI transmit failed.\r\n");
+					usb_read_flag = 1;
+					err_record |= (1<<MASK_ERR_SPI);
 				}
 				HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 

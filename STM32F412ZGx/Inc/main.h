@@ -76,9 +76,9 @@
 // --------------------------------
 // Firmware version
 // --------------------------------
-#define VER_MAJOR 0
-#define VER_MINOR 0
-#define VER_PATCH 2
+#define VER_MAJOR 9
+#define VER_MINOR 9
+#define VER_PATCH 9
 
 // --------------------------------
 // USB Information
@@ -235,6 +235,11 @@ typedef enum{
 //#define FLASH_NEWLINE_BYTE           1
 //#define FLASH_RETURN_BYTE            1
 #define FLASH_WRITE_ROW_NUM          1    // [user config]1,2,4,(8,16)
+
+//test
+#define MASK_ERR_I2C  0
+#define MASK_ERR_FSMC 1
+#define MASK_ERR_SPI  2
 
 
 
