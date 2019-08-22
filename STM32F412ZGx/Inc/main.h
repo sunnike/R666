@@ -240,6 +240,7 @@ typedef enum{
 #define MASK_ERR_I2C  0
 #define MASK_ERR_FSMC 1
 #define MASK_ERR_SPI  2
+#define MASK_ERR_USB  3
 
 
 

@@ -650,6 +650,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			if(f_open(&WriteFile, usb_log_report_filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
+				err_record |= (1 << MASK_ERR_USB);
 				aewin_dbg("Open log_report file failed.\r\n");
 			}
 			else
@@ -678,6 +679,11 @@ void USB_MSC_File_Operations(unsigned char command_type)
 				res= f_write(&WriteFile, "Last log:", sizeof("Last log:"), (void *)&bytesWritten);
 				res= f_write(&WriteFile, fpga_log_str, 2, (void *)&bytesWritten);
 				res= f_write(&WriteFile, "\r\n", sizeof("\r\n")-1, (void *)&bytesWritten);
+
+				if(fpga_log_16bit > 30)
+				{
+					err_record |= (1 << MASK_ERR_FSMC);
+				}
 
 				// record last log index
 				fpga_last_log = (fpga_log_16bit&0xFF);
@@ -837,6 +843,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			if(f_open(&ReadFile, usb_ima_file_path, FA_READ) != FR_OK)
 			{
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
+				err_record |= (1 << MASK_ERR_USB);
 
 				// [note]
 				// add usb_err_code - ima file not found
@@ -895,6 +902,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 
 				if(f_close(&ReadFile) != FR_OK)
 				{
+					err_record |= (1 << MASK_ERR_USB);
 					aewin_dbg("f_close failed.\r\n");
 				}
 			}
@@ -945,6 +953,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			if(f_open(&MyFile, usb_aewin_file_name, FA_READ) != FR_OK)
 			{
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
+				err_record |= (1 << MASK_ERR_USB);
 				aewin_dbg("f_open failed.\r\n");
 			}
 			else
@@ -1029,6 +1038,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 
 				if(f_close(&MyFile) != FR_OK)
 				{
+					err_record |= (1<<MASK_ERR_USB);
 					aewin_dbg("f_close failed.\r\n");
 				}
 
@@ -1040,6 +1050,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			if(f_open(&WriteFile, "0:error_report.txt", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				aewin_dbg("Create error_report.txt failed.\r\n");
+				err_record |= (1<<MASK_ERR_USB);
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
 			}
 			else
@@ -1063,6 +1074,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			if(f_open(&WriteFile, usb_read_flash_filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				aewin_dbg("Create flash_data.txt failed.\r\n");
+				err_record |= (1<<MASK_ERR_USB);
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
 			}
 			else

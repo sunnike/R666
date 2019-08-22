@@ -180,7 +180,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
 	aewin_dbg("================\r\n");
-	aewin_dbg("  R666 booting  \r\n");
+	aewin_dbg("    R666 test   \r\n");
 	aewin_dbg("================\r\n");
 
 	// print MCU firmware version
@@ -277,11 +277,11 @@ int main(void)
 		}
 
 		// print RTC time
-//		HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
-//		HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
-//		aewin_dbg("RTC : 20%02x.%02x.%02x - %02x:%02x:%02x\r\n", \
-//				RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
-//		aewin_dbg("----------------------------\r\n");
+		HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
+		HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
+		aewin_dbg("RTC : 20%02x.%02x.%02x - %02x:%02x:%02x\r\n", \
+				RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+		aewin_dbg("----------------------------\r\n");
 	}
 
 	/*================== 500ms Routine ================== */
@@ -303,6 +303,8 @@ int main(void)
     {
     	if(Appli_state == APPLICATION_READY)
 		{
+    		aewin_dbg("APPLICATION_READY.\r\n");
+
     		//[remove]
     		// reset timeout_counter
     		timeout_counter = 0;
@@ -524,28 +526,28 @@ int main(void)
     	{
     		//[Note]
 			// add start timer
-			if(timeout_counter_switch == 1)
-			{
-				// add timeout handler, usb re-init and init
-				//aewin_dbg("USB timeout_counter: %d! \r\n", timeout_counter);
-				if(timeout_counter > USB_TIMEOUT_LIMIT)
-				{
-					aewin_dbg("USB timeout! software reset.\r\n");
-					//HAL_TIM_Base_Stop_IT(&htim3);
-					//MX_USB_HOST_Init();
-					//MX_FATFS_Init();
-					NVIC_SystemReset();
-					//USBH_LL_DeInit(&hUsbHostFS);
-					//USBH_LL_Init(&hUsbHostFS);
-					//USBH_ReEnumerate(&hUsbHostFS);
-					//HAL_TIM_Base_Start_IT(&htim3);
-					//aewin_dbg("Reset USB_HOST finished.\r\n");
-
-					// reset timeout counter
-					timeout_counter_switch = 0;
-					timeout_counter = 0;
-				}
-			}
+//			if(timeout_counter_switch == 1)
+//			{
+//				// add timeout handler, usb re-init and init
+//				//aewin_dbg("USB timeout_counter: %d! \r\n", timeout_counter);
+//				if(timeout_counter > USB_TIMEOUT_LIMIT)
+//				{
+//					aewin_dbg("USB timeout! software reset.\r\n");
+//					//HAL_TIM_Base_Stop_IT(&htim3);
+//					//MX_USB_HOST_Init();
+//					//MX_FATFS_Init();
+//					NVIC_SystemReset();
+//					//USBH_LL_DeInit(&hUsbHostFS);
+//					//USBH_LL_Init(&hUsbHostFS);
+//					//USBH_ReEnumerate(&hUsbHostFS);
+//					//HAL_TIM_Base_Start_IT(&htim3);
+//					//aewin_dbg("Reset USB_HOST finished.\r\n");
+//
+//					// reset timeout counter
+//					timeout_counter_switch = 0;
+//					timeout_counter = 0;
+//				}
+//			}
     	}
     }
     else if(usb_read_flag == 1)
@@ -706,6 +708,7 @@ void i2c2_fpga_write(char base_addr, char data_len, char *pData)
 		if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, (uint8_t*)write_buffer, 2, 10000) != HAL_OK)
 		{
 			usb_err_code = USB_FPGA_RW_FAILED;
+			err_record |= (1 << MASK_ERR_I2C);
 			return;
 		}
 	}
@@ -723,12 +726,14 @@ void i2c2_fpga_read(char base_addr, char data_len, char *pData)
 		if(HAL_I2C_Master_Transmit(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, &(fpga_read_addr), 1, 10000) != HAL_OK)
 		{
 			usb_err_code = USB_FPGA_RW_FAILED;
+			err_record |= (1 << MASK_ERR_I2C);
 			return;
 		}
 
 		if(HAL_I2C_Master_Receive(&hi2c2, (uint16_t)I2C2_FPGA_ADDR, &(read_buffer), 1, 10000) != HAL_OK)
 		{
 			usb_err_code = USB_FPGA_RW_FAILED;
+			err_record |= (1 << MASK_ERR_I2C);
 			return;
 		}
 		pData[local_index] = read_buffer;
