@@ -179,20 +179,21 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-	aewin_dbg("================\r\n");
-	aewin_dbg("    R666 test   \r\n");
-	aewin_dbg("================\r\n");
-
-	// print MCU firmware version
-	aewin_dbg("MCU version: %d.%d.%d\r\n", VER_MAJOR, VER_MINOR, VER_PATCH);
+	aewin_dbg("=============================\r\n");
+	aewin_dbg("          R666 test          \r\n");
+	aewin_dbg("=============================\r\n");
 
 	// print booting date and time
 	HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
 	HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
 	aewin_dbg("RTC : 20%02x.%02x.%02x - %02x:%02x:%02x\r\n", RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
-	aewin_dbg("--------------------\r\n");
+	aewin_dbg("-----------------------------\r\n");
 
-	aewin_dbg("Unlock FPGA.\r\n");
+	// print MCU firmware version
+	aewin_dbg("MCU version: %d.%d.%d\r\n", VER_MAJOR, VER_MINOR, VER_PATCH);
+	aewin_dbg("-----------------------------\r\n");
+
+	//aewin_dbg("Unlock FPGA.\r\n");
 	//--------------------------------
 	// Unlock FPGA key
 	i2c2_fpga_write(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key);
@@ -200,7 +201,7 @@ int main(void)
 	// Read FPGA key
 	i2c2_fpga_read(FPGA_KEY_BASE_ADDR, FPGA_KEY_SIZE, (uint8_t*)fpga_key_readback);
 
-	aewin_dbg("Read FPGA information.\r\n");
+	aewin_dbg("------ FPGA information -----\r\n");
 	// Read FPGA information - version and time
 	i2c2_fpga_read(FPGA_INFO_BASE_ADDR, FPGA_INFO_SIZE, (uint8_t*)fpga_info);
 	aewin_dbg("FPGA version    : %d.%d.%d\r\n", fpga_info[0], fpga_info[1], fpga_info[2]);
@@ -210,6 +211,7 @@ int main(void)
 	i2c2_fpga_read(FPGA_BUSY_STATUS_BASE_ADDR, FPGA_BUSY_STATUS_SIZE, (uint8_t*)fpga_busy_status);
 	aewin_dbg("FPGA busy bit   : %x\r\n", fpga_busy_status[4]);
 	aewin_dbg("FPGA busy status: %x %x %x\r\n", fpga_busy_status[7], fpga_busy_status[6], fpga_busy_status[5]);
+	aewin_dbg("-----------------------------\r\n");
 
 	// check FPGA information. If all byte are abnormal, output error code
 	if((fpga_info[5] == FPGA_DEFULT_RETURN_VALUE) && (fpga_info[6] == FPGA_DEFULT_RETURN_VALUE) && (fpga_info[7] == FPGA_DEFULT_RETURN_VALUE))
@@ -225,10 +227,10 @@ int main(void)
 
 	//--------------------------------
 	// set RTC time to FPGA
-	// enable FPGA SPI
+	// enable FPGA timer
 	fpga_timer_switch = FPGA_TIMER_ENABLE;
 	i2c2_fpga_write(FPGA_TIMER_SWITCH_ADDR, FPGA_TIMER_SWITCH_SIZE, &(fpga_timer_switch));
-	aewin_dbg("Enable FPGA timer.\r\n");
+	//aewin_dbg("Enable FPGA timer.\r\n");
 
 	// write MCU RTC time to FPGA
 	RTC_bin_format[0] = bcd2bin_byte(RTC_Time.Seconds);
@@ -238,13 +240,13 @@ int main(void)
 	RTC_bin_format[4] = bcd2bin_byte(RTC_Date.Month);
 	RTC_bin_format[5] = bcd2bin_byte(RTC_Date.Year);
 	i2c2_fpga_write(FPGA_TIMER_BASE_ADDR, FPGA_TIMER_SIZE, (uint8_t*)RTC_bin_format);
-	aewin_dbg("Set RTC time to FPGA timer : 20%02d.%02d.%02d - %02d:%02d:%02d\r\n", \
+	//aewin_dbg("Set RTC time to FPGA timer : 20%02d.%02d.%02d - %02d:%02d:%02d\r\n", \
 			RTC_bin_format[5],RTC_bin_format[4], RTC_bin_format[3], RTC_bin_format[2], RTC_bin_format[1], RTC_bin_format[0]);
 
-	// enable FPGA SPI
+	// disable FPGA timer
 	fpga_timer_switch = FPGA_TIMER_DISABLE;
 	i2c2_fpga_write(FPGA_TIMER_SWITCH_ADDR, FPGA_TIMER_SWITCH_SIZE, &(fpga_timer_switch));
-	aewin_dbg("Disable FPGA timer.\r\n");
+	//aewin_dbg("Disable FPGA timer.\r\n");
 	//--------------------------------
 
   /*Start the TIM Base generation in interrupt mode ####################*/
@@ -253,7 +255,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-    aewin_dbg("===== Enter while loop =====\r\n");
+    //aewin_dbg("===== Enter while loop =====\r\n");
   while (1)
   {
 
@@ -277,11 +279,11 @@ int main(void)
 		}
 
 		// print RTC time
-		HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
-		HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
-		aewin_dbg("RTC : 20%02x.%02x.%02x - %02x:%02x:%02x\r\n", \
-				RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
-		aewin_dbg("----------------------------\r\n");
+//		HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
+//		HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
+//		aewin_dbg("RTC : 20%02x.%02x.%02x - %02x:%02x:%02x\r\n", \
+//				RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+//		aewin_dbg("----------------------------\r\n");
 	}
 
 	/*================== 500ms Routine ================== */
@@ -303,8 +305,6 @@ int main(void)
     {
     	if(Appli_state == APPLICATION_READY)
 		{
-    		aewin_dbg("APPLICATION_READY.\r\n");
-
     		//[remove]
     		// reset timeout_counter
     		timeout_counter = 0;
@@ -313,30 +313,41 @@ int main(void)
     		// check if FPGA is not busy - verify fpga_busy_status value(Busy and TPCM)
 			if( (fpga_busy_status[0] == 0) && (fpga_busy_status[1] == 0) )
 			{
+				// print RTC time
+				aewin_dbg("-----------------------------\r\n");
+				aewin_dbg("-----   Start Testing   -----\r\n");
+				aewin_dbg("-----------------------------\r\n");
+				HAL_RTC_GetTime(&hrtc, &RTC_Time, RTC_FORMAT_BCD);
+				HAL_RTC_GetDate(&hrtc, &RTC_Date, RTC_FORMAT_BCD);
+				aewin_dbg("RTC : 20%02x.%02x.%02x - %02x:%02x:%02x\r\n", \
+						RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds);
+				aewin_dbg("-----------------------------\r\n");
+
 				usb_read_flag = 1;
 
 				// read aewin_file.txt to check user command code
-				USB_MSC_File_Operations(USB_EXE_READ_CMD);
-				fpga_spi_mode = usb_cmd_flash_num;
+				//USB_MSC_File_Operations(USB_EXE_READ_CMD);
+				//fpga_spi_mode = usb_cmd_flash_num;
 
 				// [test]
 				// 1. read log, output to uart and save to usb
-				aewin_dbg("Get command: Read log from FPGA.\r\n");
+				aewin_dbg("1. Read log from FPGA.\r\n");
 				USB_MSC_File_Operations(USB_CMD_READ_LOG);
+				aewin_dbg("-----------------------------\r\n");
 
 				// 2. read 1 page from each flash
-				aewin_dbg("Get command: Read 512 byte data from each flash.\r\n");
+				aewin_dbg("2. Read 512 byte data from each flash.\r\n");
 
 				for(fpga_spi_mode = 0; fpga_spi_mode < 4; fpga_spi_mode++)
 				{
 					// select target flash
 					i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
-					aewin_dbg("Select flash %d for reading.\r\n", fpga_spi_mode);
+					aewin_dbg("\r\nRead data from flash %d.\r\n", fpga_spi_mode);
 
 					// enable FPGA SPI
 					fpga_spi_switch = FPGA_SPI_SWITCH_ON;
 					i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
-					aewin_dbg("Enable FPGA SPI.\r\n");
+					//aewin_dbg("Enable FPGA SPI.\r\n");
 
 					// read flash
 					usb_cmd_flash_num = fpga_spi_mode;
@@ -345,13 +356,13 @@ int main(void)
 					// disable FPGA SPI
 					fpga_spi_switch = FPGA_SPI_SWITCH_OFF;
 					i2c2_fpga_write(FPGA_SPI_SWITCH_ADDR, FPGA_SPI_SWITCH_SIZE, &(fpga_spi_switch));
-					aewin_dbg("Disable FPGA SPI.\r\n");
+					//aewin_dbg("Disable FPGA SPI.\r\n");
 				}
 
 				// de-select target flash
 				fpga_spi_mode = FLASH_NONE;
 				i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
-				aewin_dbg("Select flash back to 0.\r\n", fpga_spi_mode);
+				//aewin_dbg("Select flash back to 0.\r\n", fpga_spi_mode);
 
 
 				// [debug] - specify user command code
@@ -526,60 +537,73 @@ int main(void)
     	{
     		//[Note]
 			// add start timer
-//			if(timeout_counter_switch == 1)
-//			{
-//				// add timeout handler, usb re-init and init
-//				//aewin_dbg("USB timeout_counter: %d! \r\n", timeout_counter);
-//				if(timeout_counter > USB_TIMEOUT_LIMIT)
-//				{
-//					aewin_dbg("USB timeout! software reset.\r\n");
-//					//HAL_TIM_Base_Stop_IT(&htim3);
-//					//MX_USB_HOST_Init();
-//					//MX_FATFS_Init();
-//					NVIC_SystemReset();
-//					//USBH_LL_DeInit(&hUsbHostFS);
-//					//USBH_LL_Init(&hUsbHostFS);
-//					//USBH_ReEnumerate(&hUsbHostFS);
-//					//HAL_TIM_Base_Start_IT(&htim3);
-//					//aewin_dbg("Reset USB_HOST finished.\r\n");
-//
-//					// reset timeout counter
-//					timeout_counter_switch = 0;
-//					timeout_counter = 0;
-//				}
-//			}
+			if(timeout_counter_switch == 1)
+			{
+				// add timeout handler, usb re-init and init
+				//aewin_dbg("USB timeout_counter: %d! \r\n", timeout_counter);
+				if(timeout_counter > USB_TIMEOUT_LIMIT)
+				{
+					aewin_dbg("USB timeout! software reset.\r\n");
+					//HAL_TIM_Base_Stop_IT(&htim3);
+					//MX_USB_HOST_Init();
+					//MX_FATFS_Init();
+					NVIC_SystemReset();
+					//USBH_LL_DeInit(&hUsbHostFS);
+					//USBH_LL_Init(&hUsbHostFS);
+					//USBH_ReEnumerate(&hUsbHostFS);
+					//HAL_TIM_Base_Start_IT(&htim3);
+					//aewin_dbg("Reset USB_HOST finished.\r\n");
+
+					// reset timeout counter
+					timeout_counter_switch = 0;
+					timeout_counter = 0;
+				}
+			}
     	}
     }
     else if(usb_read_flag == 1)
     {
     	aewin_dbg("===== test result =====\r\n");
+
     	if(err_record & (1<<MASK_ERR_I2C) != 1)
     	{
-    		aewin_dbg("I2C test failed.\r\n");
+    		aewin_dbg("I2C  test ...... failed\r\n");
     	}
     	else
     	{
-    		aewin_dbg("I2C test pass.\r\n");
+    		aewin_dbg("I2C  test ........ pass\r\n");
     	}
 
     	// don't know what means FSMC fail/pass
     	if(err_record & (1<<MASK_ERR_FSMC) != 1)
 		{
-			aewin_dbg("FSMC test failed.\r\n");
+			aewin_dbg("FSMC test ...... failed\r\n");
 		}
 		else
 		{
-			aewin_dbg("FSMC test pass.\r\n");
+			aewin_dbg("FSMC test ........ pass\r\n");
 		}
 
     	if(err_record & (1<<MASK_ERR_SPI) != 1)
 		{
-			aewin_dbg("SPI test failed.\r\n");
+			aewin_dbg("SPI  test ...... failed\r\n");
 		}
 		else
 		{
-			aewin_dbg("SPI test pass.\r\n");
+			aewin_dbg("SPI  test ........ pass\r\n");
 		}
+
+    	if(err_record & (1<<MASK_ERR_USB) != 1)
+		{
+			aewin_dbg("USB  test ...... failed\r\n");
+		}
+		else
+		{
+			aewin_dbg("USB  test ........ pass\r\n");
+		}
+
+    	aewin_dbg("=======================\r\n");
+    	usb_read_flag = 2;
     }
     else if(Appli_state == APPLICATION_DISCONNECT)
 	{

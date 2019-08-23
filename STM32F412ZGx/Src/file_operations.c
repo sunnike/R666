@@ -575,7 +575,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 
 			// print FPGA information
 			aewin_dbg("FPGA version: %d.%d.%d\r\n", fpga_info[0], fpga_info[1], fpga_info[2]);
-			aewin_dbg("FPGA build date: 20%02d %02d %02d\r\n", fpga_info[5], fpga_info[4], fpga_info[3]);
+			aewin_dbg("FPGA build date: 20%02d.%02d.%02d\r\n", fpga_info[5], fpga_info[4], fpga_info[3]);
 			aewin_dbg("---------------------------\r\n");
 
 			// print log to UART2
@@ -646,7 +646,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds, usb_txt_attchment_name);
 			aewin_dbg("Output file: %s\r\n", usb_log_report_filename);
 
-			aewin_dbg("Start saving log.\r\n");
+			//aewin_dbg("Start saving log.\r\n");
 			if(f_open(&WriteFile, usb_log_report_filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 			{
 				usb_err_code = USB_ERR_FILE_RW_FAILED;
@@ -811,7 +811,7 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					aewin_dbg("Close log_report file failed.\r\n");
 				}
 			}
-			aewin_dbg("Saving log finished.\r\n");
+			//aewin_dbg("Saving log finished.\r\n");
 
 			break;
 
@@ -1069,17 +1069,17 @@ void USB_MSC_File_Operations(unsigned char command_type)
 			// setting file name of output data according to the flash number and RTC
 			sprintf(usb_read_flash_filename, "%s_%d_20%02x%02x%02x%02x%02x%02x%s", usb_flash_data_name, usb_cmd_flash_num, \
 					RTC_Date.Year, RTC_Date.Month, RTC_Date.Date, RTC_Time.Hours, RTC_Time.Minutes, RTC_Time.Seconds, usb_ima_attchment_name);
-			aewin_dbg("Output file: %s\r\n", usb_read_flash_filename);
+			//aewin_dbg("Output file: %s\r\n", usb_read_flash_filename);
 
-			if(f_open(&WriteFile, usb_read_flash_filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
-			{
-				aewin_dbg("Create flash_data.txt failed.\r\n");
-				err_record |= (1<<MASK_ERR_USB);
-				usb_err_code = USB_ERR_FILE_RW_FAILED;
-			}
-			else
-			{
-				aewin_dbg("Start reading flash data.\r\n");
+//			if(f_open(&WriteFile, usb_read_flash_filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+//			{
+//				aewin_dbg("Create flash_data.txt failed.\r\n");
+//				err_record |= (1<<MASK_ERR_USB);
+//				usb_err_code = USB_ERR_FILE_RW_FAILED;
+//			}
+//			else
+//			{
+				//aewin_dbg("Start reading flash data.\r\n");
 				HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
 				if(HAL_SPI_Transmit(&hspi1, (uint8_t*)flash_cmd_read, sizeof(flash_cmd_read), 5000) == HAL_OK)
 				{
@@ -1095,6 +1095,18 @@ void USB_MSC_File_Operations(unsigned char command_type)
 							err_record |= (1<<MASK_ERR_SPI);
 
 							break;
+						}
+						else
+						{
+							//print flash data to uart2
+							for(page_data_index = 0; page_data_index < sizeof(flash_data_read); page_data_index++)
+							{
+								aewin_dbg("0x%02x ", flash_data_read[page_data_index]);
+								if(page_data_index % 16 == 15)
+								{
+									aewin_dbg("\r\n");
+								}
+							}
 						}
 
 						// print page number of flash
@@ -1143,25 +1155,26 @@ void USB_MSC_File_Operations(unsigned char command_type)
 						}
 						*/
 
+						// [test] don't need to save file to USB
 						// write flash data to a .ima file
-						res= f_write(&WriteFile, flash_data_read, sizeof(flash_data_read), (void *)&bytesWritten);
+						//res= f_write(&WriteFile, flash_data_read, sizeof(flash_data_read), (void *)&bytesWritten);
 
 					}
-				}
-				else
-				{
-					// [test] SPI failed
-					aewin_dbg("SPI transmit failed.\r\n");
-					usb_read_flag = 1;
-					err_record |= (1<<MASK_ERR_SPI);
-				}
+//				}
+//				else
+//				{
+//					// [test] SPI failed
+//					aewin_dbg("SPI transmit failed.\r\n");
+//					usb_read_flag = 1;
+//					err_record |= (1<<MASK_ERR_SPI);
+//				}
 				HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
-				if(f_close(&WriteFile) != FR_OK)
-				{
-					aewin_dbg("f_close failed.\r\n");
-				}
-				aewin_dbg("Reading flash data finished.\r\n");
+//				if(f_close(&WriteFile) != FR_OK)
+//				{
+//					aewin_dbg("f_close failed.\r\n");
+//				}
+				//aewin_dbg("Reading flash data finished.\r\n");
 			}
 
 			break;
