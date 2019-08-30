@@ -48,14 +48,15 @@
 #include "main.h"
 
 
-#include "ff.h"
-#include "spi.h"
-#include "rtc.h"
-#include "fatfs.h"
+//#include "ff.h"
+//#include "spi.h"
+//#include "rtc.h"
+//#include "fatfs.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+#if 0
 
 uint32_t loop_index;
 
@@ -1339,6 +1340,7 @@ void flash_erase(void)
 	// READ STATUS REGISTER - wait 0x00
 	flash_check_status_reg(0x00);
 }
+#endif
 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

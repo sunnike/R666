@@ -38,14 +38,10 @@
 /* USER CODE BEGIN 0 */
 #include "main.h"
 
-volatile unsigned char time_states;
-
-volatile unsigned char timeout_counter = 0;
-unsigned char timeout_counter_switch = 0;
+volatile unsigned int time_states;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern HCD_HandleTypeDef hhcd_USB_OTG_FS;
 extern TIM_HandleTypeDef htim3;
 
 extern TIM_HandleTypeDef htim1;
@@ -73,9 +69,7 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-	aewin_dbg("HardFault interrupt!\r\n");
 
-	NVIC_SystemReset();
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
@@ -221,44 +215,80 @@ void TIM1_UP_TIM10_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
+	// per 1ms
 	static unsigned int timer_cnt = 0;
 
-	time_states |= flag_100ms;
+	time_states |= flag_1ms;
 
-	if ((++timer_cnt) >= 10){
+	if ((++timer_cnt) >= 1000){
 		/* Set 1s time flag. */
 		time_states |= flag_1s;
 		/* Clear timer count. */
 		timer_cnt = 0;
-
-		//usb timeout counter
-		timeout_counter++;
 	}
 
-	if(!(timer_cnt % 5)){
-		/* Set 500ms time flag. */
+	if(!(timer_cnt % 10)){
+		time_states |= flag_10ms;
+	}
+
+	if(!(timer_cnt % 20)){
+		time_states |= flag_20ms;
+	}
+
+	if(!(timer_cnt % 30)){
+		time_states |= flag_30ms;
+	}
+
+	if(!(timer_cnt % 40)){
+		time_states |= flag_40ms;
+	}
+
+	if(!(timer_cnt % 50)){
+		time_states |= flag_50ms;
+	}
+
+	if(!(timer_cnt % 100)){
+		time_states |= flag_100ms;
+	}
+
+	if(!(timer_cnt % 200)){
+		time_states |= flag_200ms;
+	}
+
+	if(!(timer_cnt % 300)){
+		time_states |= flag_300ms;
+	}
+
+	if(!(timer_cnt % 400)){
+		time_states |= flag_400ms;
+	}
+
+	if(!(timer_cnt % 500)){
 		time_states |= flag_500ms;
 	}
+
+	if(!(timer_cnt % 600)){
+		time_states |= flag_600ms;
+	}
+
+	if(!(timer_cnt % 700)){
+		time_states |= flag_700ms;
+	}
+
+	if(!(timer_cnt % 800)){
+		time_states |= flag_800ms;
+	}
+
+	if(!(timer_cnt % 900)){
+		time_states |= flag_900ms;
+	}
+
 
   /* USER CODE END TIM3_IRQn 0 */
   HAL_TIM_IRQHandler(&htim3);
   /* USER CODE BEGIN TIM3_IRQn 1 */
 
   /* USER CODE END TIM3_IRQn 1 */
-}
-
-/**
-* @brief This function handles USB On The Go FS global interrupt.
-*/
-void OTG_FS_IRQHandler(void)
-{
-  /* USER CODE BEGIN OTG_FS_IRQn 0 */
-
-  /* USER CODE END OTG_FS_IRQn 0 */
-  HAL_HCD_IRQHandler(&hhcd_USB_OTG_FS);
-  /* USER CODE BEGIN OTG_FS_IRQn 1 */
-
-  /* USER CODE END OTG_FS_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
