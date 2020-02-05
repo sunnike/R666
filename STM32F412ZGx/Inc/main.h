@@ -88,6 +88,7 @@ typedef enum{
   USB_CMD_READ_LOG     = 0x01, /*!< Specifies the command for read log and save to USB disk. */
   USB_CMD_UPDATE_IMA   = 0x02, /*!< Specifies the command for update flash with .ima file in USB disk. */
   USB_CMD_READ_FLASH,          /*!< Specifies the command for read flash. */
+  USB_CMD_UPDATE_RTC,          /*!< Specifies the command for update RTC date and time. */
   USB_CMD_TEST_RW,             /*!< Specifies the command for function test, write and read a .txt file. */
   USB_EXE_READ_CMD     = 0xE1, /*!< Specifies the operation for read user command. */
   USB_EXE_ERROR_REPORT         /*!< Specifies the operation for generate a error report. */
@@ -237,6 +238,22 @@ typedef enum{
 #define FLASH_WRITE_ROW_NUM          1    // [user config]1,2,4,(8,16)
 
 
+// --------------------------------
+// MCU RTC time information
+// --------------------------------
+typedef enum{
+  MCU_RTC_UPDATE_EN = 0,  /*!< RTC update enable or disable*/
+  MCU_RTC_YEAR = 1,       /*!< Year Number in RTC*/
+  MCU_RTC_MONTH = 2,      /*!< Month Number in RTC*/
+  MCU_RTC_DAY,            /*!< Day Number in RTC*/
+  MCU_RTC_HOUR,           /*!< Hour Number in RTC*/
+  MCU_RTC_MINUTE,         /*!< Minute Number in RTC*/
+  MCU_RTC_SECOND,         /*!< State Number in RTC*/
+  MCU_RTC_INFO_SIZE       /*!< Size of RTC information in RTC*/
+}eMCU_RTC_INFOs;
+
+#define RTC_UPDATE_ENABLE  1
+#define RTC_UPDATE_DISABLE 0
 
 /** @defgroup Timer_Flag_Enumeration_definition Timer Flags definition
   * @brief  Timer Flags definition

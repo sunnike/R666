@@ -96,6 +96,7 @@ uint8_t usb_cmd_code = USB_CMD_NONE;
 uint8_t usb_cmd_flash_num = FLASH_NONE;
 uint8_t usb_cmd_ima_filename[IMA_FILENAME_LEN_LIMIT];
 uint8_t usb_cmd_re_read_flash = RE_READ_FLASH_OFF;
+uint8_t usb_cmd_rtc_update[MCU_RTC_INFO_SIZE];
 
 uint8_t usb_err_code = USB_ERR_NONE;
 
@@ -447,6 +448,28 @@ int main(void)
 						fpga_spi_mode = FLASH_NONE;
 						i2c2_fpga_write(FPGA_SPI_MODE_ADDR, FPGA_SPI_MODE_SIZE, &(fpga_spi_mode));
 						aewin_dbg("Select flash back to 0.\r\n", fpga_spi_mode);
+
+						break;
+
+					case USB_CMD_UPDATE_RTC:
+						aewin_dbg("Get command: Update RTC date and time.\r\n");
+
+						if( usb_cmd_rtc_update[MCU_RTC_UPDATE_EN] == RTC_UPDATE_ENABLE)
+						{
+							RTC_Date.Year = usb_cmd_rtc_update[MCU_RTC_YEAR];
+							RTC_Date.Month = usb_cmd_rtc_update[MCU_RTC_MONTH];
+							RTC_Date.Date = usb_cmd_rtc_update[MCU_RTC_DAY];
+							RTC_Time.Hours = usb_cmd_rtc_update[MCU_RTC_HOUR];
+							RTC_Time.Minutes = usb_cmd_rtc_update[MCU_RTC_MINUTE];
+							RTC_Time.Seconds = usb_cmd_rtc_update[MCU_RTC_SECOND];
+
+							HAL_RTC_SetTime(&hrtc, &RTC_Time, RTC_FORMAT_BIN);
+							HAL_RTC_SetDate(&hrtc, &RTC_Date, RTC_FORMAT_BIN);
+						}
+						else
+						{
+							aewin_dbg("Time format is not correct.\r\n");
+						}
 
 						break;
 

@@ -80,6 +80,7 @@ const uint8_t usb_rtext_file_cmd[] = "command:";
 const uint8_t usb_rtext_file_flash_num[] = "flash_number:";
 const uint8_t usb_rtext_file_ima_name[] = "ima_file";
 const uint8_t usb_rtext_file_re_read_flash[] = "re_read_flash:";
+const uint8_t usb_rtext_file_rtc_update[] = "rtc_update:";
 const uint8_t usb_wtext_error_msg[] = "error code:";
 
 const uint8_t usb_aewin_file_name[] = "0:aewin_file.txt";
@@ -100,6 +101,7 @@ extern uint8_t usb_cmd_code;
 extern uint8_t usb_cmd_flash_num;
 extern uint8_t usb_cmd_ima_filename[IMA_FILENAME_LEN_LIMIT];
 extern uint8_t usb_cmd_re_read_flash;
+extern uint8_t usb_cmd_rtc_update[MCU_RTC_INFO_SIZE];
 extern uint8_t backup_flag[2];
 
 // ---------------
@@ -1004,6 +1006,34 @@ void USB_MSC_File_Operations(unsigned char command_type)
 					}
 				}
 				aewin_dbg("Get RE read flash setting: %d\r\n", usb_cmd_re_read_flash);
+
+				// check RTC update information
+				f_gets(usb_rtext_buffer, sizeof(usb_rtext_buffer), &MyFile);
+				usb_cmd_rtc_update[MCU_RTC_UPDATE_EN] = RTC_UPDATE_ENABLE;
+				for(loop_index = 0; loop_index < (sizeof(usb_rtext_file_rtc_update)-1) ; loop_index++)
+				{
+					if(usb_rtext_buffer[loop_index] != usb_rtext_file_rtc_update[loop_index])
+					{
+						usb_cmd_rtc_update[MCU_RTC_UPDATE_EN] = RTC_UPDATE_DISABLE;
+						usb_err_code = USB_ERR_FILE_WRONG_FORMAT;
+						break;
+					}
+				}
+
+				usb_cmd_rtc_update[MCU_RTC_YEAR] = (usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+1] - '0')*10 + usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+2] - '0';
+				usb_cmd_rtc_update[MCU_RTC_MONTH] = (usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+3] - '0')*10 + usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+4] - '0';
+				usb_cmd_rtc_update[MCU_RTC_DAY] = (usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+5] - '0')*10 + usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+6] - '0';
+				usb_cmd_rtc_update[MCU_RTC_HOUR] = (usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+7] - '0')*10 + usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+8] - '0';
+				usb_cmd_rtc_update[MCU_RTC_MINUTE] = (usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+9] - '0')*10 + usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+10] - '0';
+				usb_cmd_rtc_update[MCU_RTC_SECOND] = (usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+11] - '0')*10 + usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+12] - '0';
+
+
+				if((usb_cmd_rtc_update[MCU_RTC_MONTH] > 12) || (usb_cmd_rtc_update[MCU_RTC_DAY] > 31) || \
+						(usb_cmd_rtc_update[MCU_RTC_HOUR] > 24) || (usb_cmd_rtc_update[MCU_RTC_MINUTE] > 60) || (usb_cmd_rtc_update[MCU_RTC_SECOND] > 60))
+				{
+					usb_cmd_rtc_update[MCU_RTC_UPDATE_EN] = RTC_UPDATE_DISABLE;
+				}
+
 
 				if(f_close(&MyFile) != FR_OK)
 				{
