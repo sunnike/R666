@@ -1026,6 +1026,8 @@ void USB_MSC_File_Operations(unsigned char command_type)
 				usb_cmd_rtc_update[MCU_RTC_HOUR] = (usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+7] - '0')*10 + usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+8] - '0';
 				usb_cmd_rtc_update[MCU_RTC_MINUTE] = (usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+9] - '0')*10 + usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+10] - '0';
 				usb_cmd_rtc_update[MCU_RTC_SECOND] = (usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+11] - '0')*10 + usb_rtext_buffer[sizeof(usb_rtext_file_rtc_update)+12] - '0';
+				aewin_dbg("Get RTC update date and time: 20%02d%02d%02d%02d%02d%02d\r\n", usb_cmd_rtc_update[MCU_RTC_YEAR], usb_cmd_rtc_update[MCU_RTC_MONTH], usb_cmd_rtc_update[MCU_RTC_DAY], \
+						usb_cmd_rtc_update[MCU_RTC_HOUR], usb_cmd_rtc_update[MCU_RTC_MINUTE], usb_cmd_rtc_update[MCU_RTC_SECOND]);
 
 
 				if((usb_cmd_rtc_update[MCU_RTC_MONTH] > 12) || (usb_cmd_rtc_update[MCU_RTC_DAY] > 31) || \
